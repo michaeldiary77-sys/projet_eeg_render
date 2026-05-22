@@ -3,47 +3,47 @@ import { createContext, useContext, useState } from 'react'
 import type { Utilisateur, RoleUtilisateur } from '@/types/eeg/utilisateur'
 
 const UTILISATEURS_SIMULES: Record<RoleUtilisateur, Utilisateur> = {
-  INTERNE: {
+  MEDECIN_SERVICE: {
     id: 'int-00000000-0000-0000-0000-000000000004',
     nom: 'Rasolo',
     prenom: 'Hery',
     email: 'hery.rasolo@chu-andrainjato.mg',
-    role: 'INTERNE',
+    role: 'MEDECIN_SERVICE',
     ordresProfessionnel: 'ONM',
     numeroOrdre: 'ONM-2024-0456',
     actif: true,
     createdAt: '',
     updatedAt: '',
   },
-  TECHNICIEN_EEG: {
+  TECHNICIEN: {
     id: 'tec-00000000-0000-0000-0000-000000000002',
     nom: 'Rakotomalala',
     prenom: 'Toky',
     email: 'toky.rakotomalala@chu-andrainjato.mg',
-    role: 'TECHNICIEN_EEG',
+    role: 'TECHNICIEN',
     ordresProfessionnel: 'AUCUN',
     actif: true,
     createdAt: '',
     updatedAt: '',
   },
-  NEUROLOGUE: {
+  CHEF_SERVICE: {
     id: 'med-00000000-0000-0000-0000-000000000001',
     nom: 'Raharison',
     prenom: 'Jean',
     email: 'jean.raharison@chu-andrainjato.mg',
-    role: 'NEUROLOGUE',
+    role: 'CHEF_SERVICE',
     ordresProfessionnel: 'ONM',
     numeroOrdre: 'ONM-2018-0123',
     actif: true,
     createdAt: '',
     updatedAt: '',
   },
-  MAJOR: {
+  MAJOR_SERVICE: {
     id: 'maj-00000000-0000-0000-0000-000000000003',
     nom: 'Andrianasolo',
     prenom: 'Miora',
     email: 'miora.andrianasolo@chu-andrainjato.mg',
-    role: 'MAJOR',
+    role: 'MAJOR_SERVICE',
     ordresProfessionnel: 'AUCUN',
     actif: true,
     createdAt: '',
@@ -59,7 +59,7 @@ interface UserContextType {
 const UserContext = createContext<UserContextType | null>(null)
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<Utilisateur>(UTILISATEURS_SIMULES.TECHNICIEN_EEG)
+  const [user, setUser] = useState<Utilisateur>(UTILISATEURS_SIMULES.TECHNICIEN)
 
   const setRole = (role: RoleUtilisateur) => {
     setUser(UTILISATEURS_SIMULES[role])

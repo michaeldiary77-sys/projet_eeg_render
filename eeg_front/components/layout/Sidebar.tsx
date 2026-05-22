@@ -12,14 +12,14 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: 'Tableau de bord', href: '/eeg/dashboard', roles: ['TECHNICIEN_EEG', 'NEUROLOGUE', 'MAJOR'], icon: '📊' },
-  { label: 'File de travail', href: '/eeg/worklist', roles: ['TECHNICIEN_EEG', 'NEUROLOGUE', 'MAJOR'], icon: '📋' },
-  { label: 'Planning RDV', href: '/eeg/planning', roles: ['TECHNICIEN_EEG', 'NEUROLOGUE', 'MAJOR'], icon: '📅' },
-  { label: 'Archives EEG', href: '/eeg/archives', roles: ['INTERNE', 'TECHNICIEN_EEG', 'NEUROLOGUE', 'MAJOR'], icon: '🗄️' },
-  { label: 'Notifications', href: '/eeg/notifications', roles: ['INTERNE', 'TECHNICIEN_EEG', 'NEUROLOGUE', 'MAJOR'], icon: '🔔' },
-  { label: 'Patients', href: '/eeg/patients', roles: ['INTERNE', 'TECHNICIEN_EEG', 'NEUROLOGUE', 'MAJOR'], icon: '👤' },
-  { label: 'Rapports', href: '/eeg/rapports', roles: ['MAJOR'], icon: '📈' },
-  { label: 'Mon Profil', href: '/eeg/profil', roles: ['INTERNE', 'TECHNICIEN_EEG', 'NEUROLOGUE', 'MAJOR'], icon: '⚙️' },
+  { label: 'Tableau de bord', href: '/eeg/dashboard', roles: ['TECHNICIEN', 'CHEF_SERVICE', 'MAJOR_SERVICE'], icon: '📊' },
+  { label: 'File de travail', href: '/eeg/worklist', roles: ['TECHNICIEN', 'CHEF_SERVICE', 'MAJOR_SERVICE'], icon: '📋' },
+  { label: 'Planning RDV', href: '/eeg/planning', roles: ['TECHNICIEN', 'CHEF_SERVICE', 'MAJOR_SERVICE'], icon: '📅' },
+  { label: 'Archives EEG', href: '/eeg/archives', roles: ['MEDECIN_SERVICE', 'TECHNICIEN', 'CHEF_SERVICE', 'MAJOR_SERVICE'], icon: '🗄️' },
+  { label: 'Notifications', href: '/eeg/notifications', roles: ['MEDECIN_SERVICE', 'TECHNICIEN', 'CHEF_SERVICE', 'MAJOR_SERVICE'], icon: '🔔' },
+  { label: 'Patients', href: '/eeg/patients', roles: ['MEDECIN_SERVICE', 'TECHNICIEN', 'CHEF_SERVICE', 'MAJOR_SERVICE'], icon: '👤' },
+  { label: 'Rapports', href: '/eeg/rapports', roles: ['MAJOR_SERVICE'], icon: '📈' },
+  { label: 'Mon Profil', href: '/eeg/profil', roles: ['MEDECIN_SERVICE', 'TECHNICIEN', 'CHEF_SERVICE', 'MAJOR_SERVICE'], icon: '⚙️' },
 ]
 
 export default function Sidebar() {

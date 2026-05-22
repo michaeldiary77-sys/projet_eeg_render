@@ -22,7 +22,7 @@ export default function TabBRealisation({ demande, onRefresh }: TabBRealisationP
   const [uploading, setUploading] = useState(false)
   const [progression, setProgression] = useState(0)
 
-  const lectureSeule = user.role === 'INTERNE'
+  const lectureSeule = user.role === 'MEDECIN_SERVICE'
   const resultat = demande.resultat
   const rdv = demande.rdv
 

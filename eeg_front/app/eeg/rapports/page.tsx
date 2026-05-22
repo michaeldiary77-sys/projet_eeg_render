@@ -17,7 +17,7 @@ export default function RapportsPage() {
   const [chargement, setChargement] = useState(true)
 
   useEffect(() => {
-    if (user.role !== 'MAJOR') {
+    if (user.role !== 'MAJOR_SERVICE') {
       router.replace('/eeg/dashboard')
       return
     }
@@ -40,7 +40,7 @@ export default function RapportsPage() {
     fetchAll()
   }, [user.role, router])
 
-  if (user.role !== 'MAJOR') return null
+  if (user.role !== 'MAJOR_SERVICE') return null
 
   if (chargement) {
     return (
@@ -54,7 +54,7 @@ export default function RapportsPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-gray-800">Rapports statistiques</h1>
-        <p className="text-gray-400 text-sm mt-1">Supervision — Accès Major uniquement</p>
+        <p className="text-gray-400 text-sm mt-1">Supervision — Accès Major de service uniquement</p>
       </div>
 
       {activite && <KpiRapport data={activite} />}

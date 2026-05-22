@@ -1,4 +1,4 @@
-export type RoleUtilisateur = 'INTERNE' | 'TECHNICIEN_EEG' | 'NEUROLOGUE' | 'MAJOR'
+export type RoleUtilisateur = 'MEDECIN_SERVICE' | 'TECHNICIEN' | 'CHEF_SERVICE' | 'MAJOR_SERVICE'
 export type OrdreProfessionnel = 'ONM' | 'ONIM' | 'ONSFM' | 'ONPM' | 'AUTRE' | 'AUCUN'
 
 export interface Utilisateur {

@@ -36,7 +36,7 @@ export default function PanneauDetailRDV({
   const { user } = useUser()
   const [enCours, setEnCours] = useState<string | null>(null)
 
-  const peutModifier = user.role === 'TECHNICIEN_EEG' || user.role === 'NEUROLOGUE'
+  const peutModifier = user.role === 'TECHNICIEN' || user.role === 'CHEF_SERVICE'
 
   const action = async (type: string, fn: () => Promise<unknown>) => {
     setEnCours(type)

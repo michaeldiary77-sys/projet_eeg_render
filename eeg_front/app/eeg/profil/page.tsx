@@ -3,10 +3,10 @@ import { useUser } from '@/contexts/UserContext'
 import type { RoleUtilisateur } from '@/types/eeg/utilisateur'
 
 const ROLE_LABELS: Record<RoleUtilisateur, string> = {
-  INTERNE: 'Interne',
-  TECHNICIEN_EEG: 'Technicien EEG',
-  NEUROLOGUE: 'Neurologue',
-  MAJOR: 'Major',
+  MEDECIN_SERVICE: 'Médecin de service',
+  TECHNICIEN: 'Technicien',
+  CHEF_SERVICE: 'Chef de service',
+  MAJOR_SERVICE: 'Major de service',
 }
 
 const ORDRE_LABELS: Record<string, string> = {
@@ -21,7 +21,7 @@ const ORDRE_LABELS: Record<string, string> = {
 export default function ProfilPage() {
   const { user } = useUser()
 
-  const afficherOrdre = user.role === 'INTERNE' || user.role === 'NEUROLOGUE'
+  const afficherOrdre = user.role === 'MEDECIN_SERVICE' || user.role === 'CHEF_SERVICE'
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -78,7 +78,7 @@ export default function ProfilPage() {
         </div>
       </div>
 
-      {/* Ordre professionnel — INTERNE et NEUROLOGUE uniquement */}
+      {/* Ordre professionnel — MEDECIN_SERVICE et CHEF_SERVICE uniquement */}
       {afficherOrdre && (
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <h2 className="font-semibold text-gray-800 mb-4">Ordre professionnel</h2>

@@ -29,10 +29,10 @@ export default function TabCCompteRendu({ demande, onRefresh }: TabCCompteRenduP
   const [enCours, setEnCours] = useState(false)
 
   const peutSaisir =
-    (user.role === 'NEUROLOGUE' || user.role === 'INTERNE') &&
+    (user.role === 'CHEF_SERVICE' || user.role === 'MEDECIN_SERVICE') &&
     resultat &&
     !resultat.estImmutable
-  const lectureSeule = user.role === 'TECHNICIEN_EEG' || user.role === 'MAJOR' || (resultat?.estImmutable ?? false)
+  const lectureSeule = user.role === 'TECHNICIEN' || user.role === 'MAJOR_SERVICE' || (resultat?.estImmutable ?? false)
 
   // Charger résultat si pas déjà dans demande
   useEffect(() => {
@@ -214,7 +214,7 @@ export default function TabCCompteRendu({ demande, onRefresh }: TabCCompteRenduP
         )}
 
         {/* Bouton rectification */}
-        {resultat.estImmutable && (user.role === 'NEUROLOGUE' || user.role === 'INTERNE') && (
+        {resultat.estImmutable && (user.role === 'CHEF_SERVICE' || user.role === 'MEDECIN_SERVICE') && (
           <div className="flex justify-end">
             <button
               onClick={() => setShowRectification(true)}

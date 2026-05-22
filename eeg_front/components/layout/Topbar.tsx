@@ -5,10 +5,10 @@ import { getNotificationsCount } from '@/services/notifications.service'
 import type { RoleUtilisateur } from '@/types/eeg/utilisateur'
 
 const ROLE_LABELS: Record<RoleUtilisateur, string> = {
-  INTERNE: 'Interne',
-  TECHNICIEN_EEG: 'Technicien EEG',
-  NEUROLOGUE: 'Neurologue',
-  MAJOR: 'Major',
+  MEDECIN_SERVICE: 'Médecin de service',
+  TECHNICIEN: 'Technicien',
+  CHEF_SERVICE: 'Chef de service',
+  MAJOR_SERVICE: 'Major de service',
 }
 
 export default function Topbar() {
@@ -43,10 +43,10 @@ export default function Topbar() {
           onChange={e => setRole(e.target.value as RoleUtilisateur)}
           className="text-xs border border-gray-200 rounded-lg px-2 py-1 text-gray-600 bg-gray-50"
         >
-          <option value="TECHNICIEN_EEG">Technicien EEG</option>
-          <option value="NEUROLOGUE">Neurologue</option>
-          <option value="MAJOR">Major</option>
-          <option value="INTERNE">Interne</option>
+          <option value="TECHNICIEN">Technicien</option>
+          <option value="CHEF_SERVICE">Chef de service</option>
+          <option value="MAJOR_SERVICE">Major de service</option>
+          <option value="MEDECIN_SERVICE">Médecin de service</option>
         </select>
 
         {/* Badge notifications */}

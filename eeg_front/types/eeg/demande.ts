@@ -1,7 +1,9 @@
 export type StatutDemande =
   | 'CREEE'
-  | 'EN_ATTENTE'
+  | 'VALIDEE'
+  | 'PLANIFIEE'
   | 'EN_COURS'
+  | 'EN_INTERPRETATION'
   | 'RESULTAT_DISPONIBLE'
   | 'ACK_RECU'
   | 'ANNULEE'
@@ -31,4 +33,14 @@ export interface DemandeEEG {
   prescripteur?: import('./utilisateur').Utilisateur
   resultat?: import('./resultat').EegResultat
   rdv?: import('./rdv').RendezVousEEG
+}
+
+export interface WorklistData {
+  aValider?: DemandeEEG[]
+  aInterpreter?: DemandeEEG[]
+  statUrgents?: DemandeEEG[]
+  rdvDuJour?: DemandeEEG[]
+  aPlanifier?: DemandeEEG[]
+  aValiderCR?: DemandeEEG[]
+  toutes?: DemandeEEG[]
 }

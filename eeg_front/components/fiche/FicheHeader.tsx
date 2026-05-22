@@ -42,7 +42,7 @@ export default function FicheHeader({ demande, onRefresh }: FicheHeaderProps) {
 
   const peutAck =
     demande.statut === 'RESULTAT_DISPONIBLE' &&
-    (user.role === 'NEUROLOGUE' || user.role === 'INTERNE')
+    (user.role === 'CHEF_SERVICE' || user.role === 'MEDECIN_SERVICE')
 
   const handleAck = async () => {
     setEnCours(true)

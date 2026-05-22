@@ -24,7 +24,7 @@ export default function PlanningToolbar({
   onNouveauRdv,
 }: PlanningToolbarProps) {
   const { user } = useUser()
-  const peutCreer = user.role === 'TECHNICIEN_EEG' || user.role === 'NEUROLOGUE'
+  const peutCreer = user.role === 'TECHNICIEN' || user.role === 'CHEF_SERVICE'
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
