@@ -101,15 +101,72 @@ export class DemandesService {
   async planifierRdv(id: string, dto: any, chefId: string) {
     const d = await this.getDemandeById(id);
     if (d.statut !== 'VALIDEE') throw new BadRequestException(`Statut invalide: ${d.statut}`);
+
+    const maintenant = new Date();
+    const jPlus2 = new Date(maintenant);
+    jPlus2.setDate(maintenant.getDate() + 2);
+    jPlus2.setHours(0, 0, 0, 0);
+
+    const rdvsExistants = await this.prisma.eegRdv.findMany({
+      where: { dateRdv: { gte: jPlus2 } },
+      select: { dateRdv: true, heureDebut: true, salle: true },
+      orderBy: { dateRdv: 'asc' },
+    });
+
+    const salles = ['Salle 01', 'Salle 02', 'Salle 03'];
+    let dateChoisie: Date | null = null;
+    let heureDebut = '08:00';
+    let salleChoisie = 'Salle 01';
+    let trouve = false;
+
+    for (let j = 0; j < 30 && !trouve; j++) {
+      const date = new Date(jPlus2);
+      date.setDate(jPlus2.getDate() + j);
+      if (date.getDay() === 0 || date.getDay() === 6) continue;
+
+      for (const salle of salles) {
+        for (let h = 8; h < 17 && !trouve; h++) {
+          const debut = `${String(h).padStart(2, '0')}:00`;
+          const occupe = rdvsExistants.some(r => {
+            if (!r || !r.salle || !r.heureDebut || !r.dateRdv) return false;
+            const rDate = new Date(r.dateRdv).toDateString();
+            return rDate === date.toDateString() && r.salle === salle && r.heureDebut === debut;
+          });
+          if (!occupe) {
+            dateChoisie = new Date(date);
+            heureDebut = debut;
+            salleChoisie = salle;
+            trouve = true;
+          }
+        }
+      }
+    }
+
+    if (!trouve || !dateChoisie) throw new BadRequestException('Aucun créneau disponible trouvé');
+
+    const heureNum = parseInt(heureDebut.split(':')[0]);
+    const fin = `${String(heureNum + 1).padStart(2, '0')}:00`;
+
     await this.prisma.eegRdv.create({
       data: {
-        patientId: d.patientId, prescripteurId: d.prescripteurId, demandeId: id,
-        typeEEG: d.typeEEG, salle: dto.salle ?? 'Salle 01', priorite: d.urgence,
-        dateRdv: new Date(dto.dateRDV), heureDebut: dto.heureDebut ?? '09:00',
-        heureFin: dto.heureFin ?? '10:00', dureeMinutes: dto.dureeMinutes ?? 60,
+        patientId: d.patientId,
+        prescripteurId: d.prescripteurId,
+        demandeId: id,
+        typeEEG: d.typeEEG,
+        salle: salleChoisie,
+        priorite: d.urgence,
+        dateRdv: dateChoisie,
+        heureDebut,
+        heureFin: fin,
+        dureeMinutes: 60,
+        renseignementClinique: d.motifPrescription,
       },
     });
-    return this.prisma.eegDemande.update({ where: { id }, data: { statut: 'PLANIFIEE', dateRDV: new Date(dto.dateRDV) } });
+
+    return this.prisma.eegDemande.update({
+      where: { id },
+      data: { statut: 'PLANIFIEE', dateRDV: dateChoisie },
+    });
   }
 
   async realiserDemande(id: string, techId: string) {
@@ -135,8 +192,14 @@ export class DemandesService {
   async validerCR(id: string, chefId: string) {
     const d = await this.getDemandeById(id);
     if (d.statut !== 'EN_INTERPRETATION') throw new BadRequestException(`Statut invalide: ${d.statut}`);
-    await this.prisma.eegResultat.update({ where: { demandeId: id }, data: { estImmutable: true, dateValidation: new Date() } });
-    return this.prisma.eegDemande.update({ where: { id }, data: { statut: 'RESULTAT_DISPONIBLE', dateValidation: new Date() } });
+    await this.prisma.eegResultat.update({
+      where: { demandeId: id },
+      data: { estImmutable: true, dateValidation: new Date() },
+    });
+    return this.prisma.eegDemande.update({
+      where: { id },
+      data: { statut: 'RESULTAT_DISPONIBLE', dateValidation: new Date() },
+    });
   }
 
   async accuserReception(id: string, medecinId: string) {
