@@ -16,6 +16,23 @@ import { DemandesService } from './demandes.service';
 export class DemandesController {
   constructor(private readonly demandesService: DemandesService) {}
 
+  @Post()
+  @ApiOperation({ summary: "Créer une nouvelle demande EEG" })
+  @ApiBody({
+    schema: {
+      type: "object",
+      properties: {
+        patientId: { type: "string", example: "4b0f2a29-af9b-4e93-9db6-78c27d19c30c" },
+        episodeSoinsId: { type: "string", example: "EPI-001" },
+        typeEEG: { type: "string", enum: ["STANDARD", "SOMMEIL", "AMBULATOIRE", "VIDEO_EEG"], example: "STANDARD" },
+        urgence: { type: "string", enum: ["STAT", "URGENTE", "NORMALE"], example: "URGENTE" },
+        motifPrescription: { type: "string", example: "Motif de la prescription" }
+      },
+      required: ["patientId", "episodeSoinsId", "typeEEG", "urgence", "motifPrescription"]
+    }
+  })
+  @ApiOperation({ summary: 'Créer une nouvelle demande EEG' })
+  async creerDemande(@Body() dto: any, @Request() req: any) {
     const prescripteurId = req.user?.id ?? 'int-00000000-0000-0000-0000-000000000004';
     return this.demandesService.creerDemande(dto, prescripteurId);
   }
@@ -108,22 +125,3 @@ export class DemandesController {
     return this.demandesService.accuserReception(id, medecinId);
   }
 }
-  @Post()
-  @ApiOperation({ summary: 'Créer une nouvelle demande EEG' })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        patientId: { type: 'string', example: '4b0f2a29-af9b-4e93-9db6-78c27d19c30c' },
-        episodeSoinsId: { type: 'string', example: 'EPI-001' },
-        typeEEG: { type: 'string', enum: ['STANDARD', 'SOMMEIL', 'AMBULATOIRE', 'VIDEO_EEG'], example: 'STANDARD' },
-        urgence: { type: 'string', enum: ['STAT', 'URGENTE', 'NORMALE'], example: 'URGENTE' },
-        motifPrescription: { type: 'string', example: 'Motif de la prescription' }
-      },
-      required: ['patientId', 'episodeSoinsId', 'typeEEG', 'urgence', 'motifPrescription']
-    }
-  })
-  async creerDemande(@Body() dto: any, @Request() req: any) {
-    const prescripteurId = req.user?.id ?? 'int-00000000-0000-0000-0000-000000000004';
-    return this.demandesService.creerDemande(dto, prescripteurId);
-  }
