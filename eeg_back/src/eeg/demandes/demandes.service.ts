@@ -213,22 +213,16 @@ export class DemandesService {
   }
 
   async creerDemande(data: any, prescripteurId: string) {
-    // Envoyer une notification au service central
-    this.notificationService.sendNotification({
-      type: "DEMANDE_EXAMEN",
-      motif: `Nouvelle demande EEG pour ${data.patientId}`,
-      urgence: data.urgence === "STAT" ? 3 : data.urgence === "URGENTE" ? 2 : 1,
-      sourceServiceId: "4024a951-ab12-4f08-84c9-66f5575bb737",
-      sourceServiceName: "EEG",
-      patientId: data.patientId,
-      sentAt: new Date().toISOString(),
-      entiteRefType: "EegDemande",
-      payload: {
-        typeEEG: data.typeEEG,
-        motif: data.motifPrescription,
-      },
-      channels: ["WEB"],
-    }).catch(err => console.error("Erreur notification:", err.message));
+    // Envoi de notification simplifié
+this.notificationService.sendNotification({
+  type: "DEMANDE_EXAMEN",
+  motif: `Nouvelle demande EEG pour patient ${data.patientId}`,
+  urgence: data.urgence === "STAT" ? 3 : data.urgence === "URGENTE" ? 2 : 1,
+  sourceServiceId: "4024a951-ab12-4f08-84c9-66f5575bb737",
+  sourceServiceName: "EEG",
+  patientId: data.patientId,
+  sentAt: new Date().toISOString(),
+}).catch(err => console.error("Erreur notification:", err.message));
 
 
     const demande = await this.prisma.eegDemande.create({
