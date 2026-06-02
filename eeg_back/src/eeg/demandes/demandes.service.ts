@@ -207,6 +207,7 @@ export class DemandesService {
     if (d.statut !== 'RESULTAT_DISPONIBLE') throw new BadRequestException(`Statut invalide: ${d.statut}`);
     return this.prisma.eegDemande.update({ where: { id }, data: { statut: 'ACK_RECU', dateAck: new Date() } });
   }
+
   async creerDemande(data: any, prescripteurId: string) {
     const demande = await this.prisma.eegDemande.create({
       data: {
@@ -222,37 +223,4 @@ export class DemandesService {
     });
     return demande;
   }
-
 }
-
-  async creerDemande(data: any, prescripteurId: string) {
-    const demande = await this.prisma.eegDemande.create({
-      data: {
-        patientId: data.patientId,
-        prescripteurId: prescripteurId,
-        typeEEG: data.typeEEG,
-        urgence: data.urgence,
-        motifPrescription: data.motifPrescription,
-        episodeSoinsId: data.episodeSoinsId,
-        numeroEEG: `EEG-${Date.now()}`,
-      },
-      include: { patient: true, prescripteur: true },
-    });
-    return demande;
-  }
-
-  async creerDemande(data: any, prescripteurId: string) {
-    const demande = await this.prisma.eegDemande.create({
-      data: {
-        patientId: data.patientId,
-        prescripteurId: prescripteurId,
-        typeEEG: data.typeEEG,
-        urgence: data.urgence,
-        motifPrescription: data.motifPrescription,
-        episodeSoinsId: data.episodeSoinsId,
-        numeroEEG: `EEG-${Date.now()}`,
-      },
-      include: { patient: true, prescripteur: true },
-    });
-    return demande;
-  }
