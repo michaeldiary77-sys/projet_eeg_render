@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState, useCallback, useMemo } from 'react'
-import { useUser } from '@/contexts/UserContext'
 import { getWorklist } from '@/services/demandes.service'
 import WorklistHeader from '@/components/worklist/WorklistHeader'
 import WorklistFiltres, { type FiltresState } from '@/components/worklist/WorklistFiltres'
@@ -12,9 +11,9 @@ import type { DemandeEEG } from '@/types/eeg/demande'
 const ITEMS_PAR_PAGE = 15
 
 export default function WorklistPage() {
-  const { user } = useUser()
   const [demandes, setDemandes] = useState<DemandeEEG[]>([])
   const [chargement, setChargement] = useState(true)
+  const [inclureTerminees, setInclureTerminees] = useState(false)
   const [page, setPage] = useState(1)
   const [filtres, setFiltres] = useState<FiltresState>({
     recherche: '',
@@ -26,17 +25,15 @@ export default function WorklistPage() {
   const charger = useCallback(async () => {
     setChargement(true)
     try {
-      const data = await getWorklist()
-      const demandesArray = Array.isArray(data) ? data : []
-      setDemandes(demandesArray)
+      const data = await getWorklist(inclureTerminees)
+      setDemandes(data)
       setPage(1)
-    } catch (error) {
-      console.error('Erreur chargement worklist:', error)
+    } catch {
       setDemandes([])
     } finally {
       setChargement(false)
     }
-  }, [])
+  }, [inclureTerminees])
 
   useEffect(() => {
     charger()
@@ -45,7 +42,6 @@ export default function WorklistPage() {
   }, [charger])
 
   const demandesFiltrees = useMemo(() => {
-    if (!Array.isArray(demandes)) return []
     return demandes.filter(d => {
       const recherche = filtres.recherche.toLowerCase()
       if (recherche) {
@@ -74,10 +70,8 @@ export default function WorklistPage() {
     page * ITEMS_PAR_PAGE
   )
 
-  const nombreStat = (Array.isArray(demandes) ? demandes : []).filter(d => d.urgence === 'STAT' && d.statut !== 'ANNULEE').length
-  const nombreUrgente = (Array.isArray(demandes) ? demandes : []).filter(d => d.urgence === 'URGENTE' && d.statut !== 'ANNULEE').length
-
-  if (!user) return null
+  const nombreStat = demandes.filter(d => d.urgence === 'STAT' && d.statut !== 'ANNULEE').length
+  const nombreUrgente = demandes.filter(d => d.urgence === 'URGENTE' && d.statut !== 'ANNULEE').length
 
   return (
     <div className="space-y-6">
@@ -85,8 +79,8 @@ export default function WorklistPage() {
         total={demandesFiltrees.length}
         nombreStat={nombreStat}
         nombreUrgente={nombreUrgente}
-        inclureTerminees={false}
-        onToggleTerminees={() => {}}
+        inclureTerminees={inclureTerminees}
+        onToggleTerminees={val => { setInclureTerminees(val); setPage(1) }}
       />
 
       <WorklistFiltres

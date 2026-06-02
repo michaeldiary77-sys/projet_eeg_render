@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { useUser } from "@/contexts/UserContext"
 import { annulerDemande } from '@/services/demandes.service'
 import { handleApiError } from '@/lib/handleApiError'
 import { toast } from 'sonner'
@@ -63,6 +64,7 @@ function MinuterieSTAT({ dateCreation }: { dateCreation: string }) {
 }
 
 export default function WorklistTable({ demandes, onRefresh }: WorklistTableProps) {
+  const { user } = useUser()
   const router = useRouter()
   const [annulationId, setAnnulationId] = useState<string | null>(null)
   const [motif, setMotif] = useState('')
@@ -157,6 +159,23 @@ export default function WorklistTable({ demandes, onRefresh }: WorklistTableProp
                     )}
                   </td>
                   <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                    {demande.statut === "VALIDEE" && user?.role === "CHEF_SERVICE" && (
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          try {
+                            const { planifierRdv } = await import("@/services/demandes.service");
+                            await planifierRdv(demande.id, { dateRDV: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString() });
+                            window.location.href = `/eeg/planning?demandeId=${demande.id}`;
+                          } catch (err) {
+                            alert("Erreur planification");
+                          }
+                        }}
+                        className="text-xs bg-cyan-500 hover:bg-cyan-600 text-white font-medium px-3 py-1 rounded-lg transition-colors mr-2"
+                      >
+                        Planifier
+                      </button>
+                    )}
                     {!['ANNULEE', 'ACK_RECU', 'RESULTAT_DISPONIBLE'].includes(demande.statut) && (
                       <button
                         onClick={() => { setAnnulationId(demande.id); setMotif('') }}
