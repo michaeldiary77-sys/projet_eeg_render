@@ -215,7 +215,7 @@ export class DemandesService {
   async creerDemande(data: any, prescripteurId: string) {
     // Envoyer une notification au service central
     this.notificationService.sendNotification({
-      type: "NOUVELLE_DEMANDE_EEG",
+      type: "DEMANDE_EXAMEN",
       motif: `Nouvelle demande EEG pour ${data.patientId}`,
       urgence: data.urgence === "STAT" ? 3 : data.urgence === "URGENTE" ? 2 : 1,
       sourceServiceId: "4024a951-ab12-4f08-84c9-66f5575bb737",
