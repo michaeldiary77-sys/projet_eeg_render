@@ -16,7 +16,13 @@ import { DemandesService } from './demandes.service';
 export class DemandesController {
   constructor(private readonly demandesService: DemandesService) {}
 
-  // ─── Worklist filtrée par rôle ──────────────────────────────────────
+  @Post()
+  @ApiOperation({ summary: 'Créer une nouvelle demande EEG' })
+  async creerDemande(@Body() dto: any, @Request() req: any) {
+    const prescripteurId = req.user?.id ?? 'int-00000000-0000-0000-0000-000000000004';
+    return this.demandesService.creerDemande(dto, prescripteurId);
+  }
+
   @Get('worklist')
   @ApiOperation({ summary: 'Worklist filtrée par rôle' })
   getWorklist(@Request() req: any, @Query("role") roleParam?: string) {
@@ -24,13 +30,12 @@ export class DemandesController {
     return this.demandesService.getWorklist(role);
   }
 
-  // ─── Détail demande ─────────────────────────────────────────────────
-
   @Get("patient/:patientId")
   @ApiOperation({ summary: "Historique EEG d'un patient" })
   getDemandesByPatient(@Param("patientId") patientId: string) {
     return this.demandesService.getDemandesByPatient(patientId);
   }
+
   @Get(':id')
   @ApiOperation({ summary: 'Détail d\'une demande EEG' })
   @ApiParam({ name: 'id' })
@@ -38,7 +43,6 @@ export class DemandesController {
     return this.demandesService.getDemandeById(id);
   }
 
-  // ─── Médecin : Valider une demande (CREEE → VALIDEE) ─────────────────
   @Patch(':id/valider')
   @ApiOperation({ summary: 'MEDECIN_SERVICE : Valider une demande (CREEE → VALIDEE)' })
   validerDemande(@Param('id') id: string, @Request() req: any) {
@@ -53,7 +57,6 @@ export class DemandesController {
     return this.demandesService.annulerDemande(id, motif, userId);
   }
 
-  // ─── Médecin : Refuser une demande (CREEE → ANNULEE) ─────────────────
   @Patch(':id/refuser')
   @ApiOperation({ summary: 'MEDECIN_SERVICE : Refuser une demande avec motif' })
   refuserDemande(
@@ -65,7 +68,6 @@ export class DemandesController {
     return this.demandesService.refuserDemande(id, motif, medecinId);
   }
 
-  // ─── Chef : Planifier un RDV (VALIDEE → PLANIFIEE) ──────────────────
   @Patch(':id/planifier')
   @ApiOperation({ summary: 'CHEF_SERVICE : Planifier un RDV (VALIDEE → PLANIFIEE)' })
   planifierRdv(
@@ -77,7 +79,6 @@ export class DemandesController {
     return this.demandesService.planifierRdv(id, dto, chefId);
   }
 
-  // ─── Technicien : Réaliser (PLANIFIEE/CREEE STAT → EN_COURS) ────────
   @Patch(':id/realiser')
   @ApiOperation({ summary: 'TECHNICIEN : Réaliser un examen' })
   realiserDemande(@Param('id') id: string, @Request() req: any) {
@@ -85,7 +86,6 @@ export class DemandesController {
     return this.demandesService.realiserDemande(id, technicienId);
   }
 
-  // ─── Médecin : Interpréter (EN_COURS → EN_INTERPRETATION) ──────────
   @Patch(':id/interpreter')
   @ApiOperation({ summary: 'MEDECIN_SERVICE : Remplir le brouillon CR' })
   interpreterDemande(
@@ -97,7 +97,6 @@ export class DemandesController {
     return this.demandesService.interpreterDemande(id, brouillon, medecinId);
   }
 
-  // ─── Chef : Valider CR (EN_INTERPRETATION → RESULTAT_DISPONIBLE) ──
   @Patch(':id/valider-cr')
   @ApiOperation({ summary: 'CHEF_SERVICE : Valider le compte rendu final' })
   validerCR(@Param('id') id: string, @Request() req: any) {
@@ -105,7 +104,6 @@ export class DemandesController {
     return this.demandesService.validerCR(id, chefId);
   }
 
-  // ─── ACK ────────────────────────────────────────────────────────────
   @Patch(':id/ack')
   @ApiOperation({ summary: 'Accusé de réception du résultat' })
   accuserReception(@Param('id') id: string, @Request() req: any) {

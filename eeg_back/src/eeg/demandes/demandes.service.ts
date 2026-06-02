@@ -224,3 +224,19 @@ export class DemandesService {
   }
 
 }
+
+  async creerDemande(data: any, prescripteurId: string) {
+    const demande = await this.prisma.eegDemande.create({
+      data: {
+        patientId: data.patientId,
+        prescripteurId: prescripteurId,
+        typeEEG: data.typeEEG,
+        urgence: data.urgence,
+        motifPrescription: data.motifPrescription,
+        episodeSoinsId: data.episodeSoinsId,
+        numeroEEG: `EEG-${Date.now()}`,
+      },
+      include: { patient: true, prescripteur: true },
+    });
+    return demande;
+  }
