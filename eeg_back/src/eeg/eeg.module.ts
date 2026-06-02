@@ -1,3 +1,4 @@
+import { ExternalModule } from "./external/external.module";
 import { Module } from '@nestjs/common';
 import { ScheduleModule } from '@nestjs/schedule';
 import { DemandesController } from './demandes/demandes.controller';
@@ -13,7 +14,7 @@ import { PatientsController } from './patients/patients.controller';
 import { EegSchedulerService } from './jobs/eeg-scheduler.service';
 
 @Module({
-  imports: [ScheduleModule.forRoot()],
+  imports: [ExternalModule,ScheduleModule.forRoot()],
   controllers: [
     DemandesController,
     ResultatsController,

@@ -1,9 +1,13 @@
+import { NotificationExternalService } from "../external/notification-external.service";
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class DemandesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationService: NotificationExternalService,
+  ) {}
 
   async getWorklist(role: string) {
     switch (role) {
@@ -209,6 +213,24 @@ export class DemandesService {
   }
 
   async creerDemande(data: any, prescripteurId: string) {
+    // Envoyer une notification au service central
+    this.notificationService.sendNotification({
+      type: "NOUVELLE_DEMANDE_EEG",
+      motif: `Nouvelle demande EEG pour ${data.patientId}`,
+      urgence: data.urgence === "STAT" ? 3 : data.urgence === "URGENTE" ? 2 : 1,
+      sourceServiceId: "4024a951-ab12-4f08-84c9-66f5575bb737",
+      sourceServiceName: "EEG",
+      patientId: data.patientId,
+      sentAt: new Date().toISOString(),
+      entiteRefType: "EegDemande",
+      payload: {
+        typeEEG: data.typeEEG,
+        motif: data.motifPrescription,
+      },
+      channels: ["WEB"],
+    }).catch(err => console.error("Erreur notification:", err.message));
+
+
     const demande = await this.prisma.eegDemande.create({
       data: {
         patientId: data.patientId,
