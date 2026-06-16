@@ -24,10 +24,26 @@ export default function WorklistPage() {
   })
 
   const charger = useCallback(async () => {
+    if (!user?.role) return
     setChargement(true)
     try {
-      const data = await getWorklist()
-      const demandesArray = Array.isArray(data) ? data : []
+      const data: any = await getWorklist(user.role)
+      
+      // Transformer l'objet retourné en tableau selon le rôle
+      let demandesArray: DemandeEEG[] = []
+      
+      if (user.role === 'MEDECIN_SERVICE') {
+        demandesArray = [...(data.aValider || []), ...(data.aInterpreter || [])]
+      } else if (user.role === 'TECHNICIEN') {
+        demandesArray = [...(data.statUrgents || []), ...(data.rdvDuJour || [])]
+      } else if (user.role === 'CHEF_SERVICE') {
+        demandesArray = [...(data.aPlanifier || []), ...(data.aValiderCR || [])]
+      } else if (user.role === 'MAJOR_SERVICE') {
+        demandesArray = data.toutes || []
+      } else {
+        demandesArray = []
+      }
+      
       setDemandes(demandesArray)
       setPage(1)
     } catch (error) {
@@ -36,7 +52,7 @@ export default function WorklistPage() {
     } finally {
       setChargement(false)
     }
-  }, [])
+  }, [user?.role])
 
   useEffect(() => {
     charger()

@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useUser } from "@/contexts/UserContext"
-import { annulerDemande } from '@/services/demandes.service'
+import { annulerDemande, validerDemande, refuserDemande, accuserReception, realiserDemande } from '@/services/demandes.service'
 import { handleApiError } from '@/lib/handleApiError'
 import { toast } from 'sonner'
 import type { DemandeEEG } from '@/types/eeg/demande'
@@ -26,6 +26,9 @@ const STATUT_BADGE: Record<string, string> = {
   RESULTAT_DISPONIBLE: 'bg-emerald-100 text-emerald-700',
   ACK_RECU: 'bg-violet-100 text-violet-700',
   ANNULEE: 'bg-gray-100 text-gray-400 line-through',
+  VALIDEE: 'bg-cyan-100 text-cyan-700',
+  PLANIFIEE: 'bg-indigo-100 text-indigo-700',
+  EN_INTERPRETATION: 'bg-purple-100 text-purple-700',
 }
 
 const STATUT_LABELS: Record<string, string> = {
@@ -35,6 +38,9 @@ const STATUT_LABELS: Record<string, string> = {
   RESULTAT_DISPONIBLE: 'Résultat disponible',
   ACK_RECU: 'ACK reçu',
   ANNULEE: 'Annulée',
+  VALIDEE: 'Validée',
+  PLANIFIEE: 'Planifiée',
+  EN_INTERPRETATION: 'En interprétation',
 }
 
 function MinuterieSTAT({ dateCreation }: { dateCreation: string }) {
@@ -68,6 +74,8 @@ export default function WorklistTable({ demandes, onRefresh }: WorklistTableProp
   const router = useRouter()
   const [annulationId, setAnnulationId] = useState<string | null>(null)
   const [motif, setMotif] = useState('')
+  const [refusId, setRefusId] = useState<string | null>(null)
+  const [motifRefus, setMotifRefus] = useState('')
   const [enCours, setEnCours] = useState(false)
 
   const confirmerAnnulation = useCallback(async () => {
@@ -85,6 +93,22 @@ export default function WorklistTable({ demandes, onRefresh }: WorklistTableProp
       setEnCours(false)
     }
   }, [annulationId, motif, onRefresh])
+
+  const confirmerRefus = useCallback(async () => {
+    if (!refusId || !motifRefus.trim()) return
+    setEnCours(true)
+    try {
+      await refuserDemande(refusId, motifRefus.trim())
+      toast.success('Demande refusée')
+      setRefusId(null)
+      setMotifRefus('')
+      onRefresh()
+    } catch (error) {
+      toast.error(handleApiError(error))
+    } finally {
+      setEnCours(false)
+    }
+  }, [refusId, motifRefus, onRefresh])
 
   if (demandes.length === 0) {
     return (
@@ -159,21 +183,80 @@ export default function WorklistTable({ demandes, onRefresh }: WorklistTableProp
                     )}
                   </td>
                   <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                    {demande.statut === "CREEE" && user?.role === "MEDECIN_SERVICE" && demande.urgence !== "STAT" && (
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation()
+                          try {
+                            await validerDemande(demande.id)
+                            toast.success('Demande validée ✅')
+                            onRefresh()
+                          } catch (err) {
+                            toast.error(handleApiError(err))
+                          }
+                        }}
+                        className="text-xs bg-emerald-500 hover:bg-emerald-600 text-white font-medium px-3 py-1 rounded-lg transition-colors mr-2"
+                      >
+                        ✅ Valider
+                      </button>
+                    )}
+                    {demande.statut === "CREEE" && user?.role === "MEDECIN_SERVICE" && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setRefusId(demande.id); setMotifRefus('') }}
+                        className="text-xs bg-red-500 hover:bg-red-600 text-white font-medium px-3 py-1 rounded-lg transition-colors mr-2"
+                      >
+                        ❌ Refuser
+                      </button>
+                    )}
                     {demande.statut === "VALIDEE" && user?.role === "CHEF_SERVICE" && (
                       <button
                         onClick={async (e) => {
                           e.stopPropagation();
                           try {
                             const { planifierRdv } = await import("@/services/demandes.service");
-                            await planifierRdv(demande.id, { dateRDV: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString() });
+                            await planifierRdv(demande.id, { dateRDV: new Date(Date.now() + 2  *24*  60  *60*  1000).toISOString() });
                             window.location.href = `/eeg/planning?demandeId=${demande.id}`;
                           } catch (err) {
-                            alert("Erreur planification");
+                            toast.error(handleApiError(err));
                           }
                         }}
                         className="text-xs bg-cyan-500 hover:bg-cyan-600 text-white font-medium px-3 py-1 rounded-lg transition-colors mr-2"
                       >
                         Planifier
+                      </button>
+                    )}
+                    {demande.statut === "RESULTAT_DISPONIBLE" && user?.role === "MEDECIN_SERVICE" && (
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation()
+                          try {
+                            await accuserReception(demande.id)
+                            toast.success('Accusé réception enregistré ✅')
+                            onRefresh()
+                          } catch (err) {
+                            toast.error(handleApiError(err))
+                          }
+                        }}
+                        className="text-xs bg-violet-500 hover:bg-violet-600 text-white font-medium px-3 py-1 rounded-lg transition-colors mr-2"
+                      >
+                        📥 Acquitter
+                      </button>
+                    )}
+                    {demande.statut === "CREEE" && demande.urgence === "STAT" && user?.role === "TECHNICIEN" && (
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation()
+                          try {
+                            await realiserDemande(demande.id)
+                            toast.success('Demande STAT prise en charge ✅')
+                            onRefresh()
+                          } catch (err) {
+                            toast.error(handleApiError(err))
+                          }
+                        }}
+                        className="text-xs bg-red-500 hover:bg-red-600 text-white font-medium px-3 py-1 rounded-lg transition-colors mr-2"
+                      >
+                        🚨 Réaliser STAT
                       </button>
                     )}
                     {!['ANNULEE', 'ACK_RECU', 'RESULTAT_DISPONIBLE'].includes(demande.statut) && (
@@ -192,7 +275,6 @@ export default function WorklistTable({ demandes, onRefresh }: WorklistTableProp
         </div>
       </div>
 
-      {/* Modal annulation */}
       {annulationId && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
@@ -218,6 +300,37 @@ export default function WorklistTable({ demandes, onRefresh }: WorklistTableProp
                 className="px-4 py-2 text-sm bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {enCours ? 'En cours...' : 'Confirmer'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {refusId && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-1">Refuser la demande</h3>
+            <p className="text-sm text-gray-500 mb-4">Le motif est obligatoire pour tracer le refus médical.</p>
+            <textarea
+              value={motifRefus}
+              onChange={e => setMotifRefus(e.target.value)}
+              placeholder="Motif du refus (ex: indication non pertinente, patient hors protocole...)"
+              rows={3}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6750a4] resize-none"
+            />
+            <div className="flex gap-3 mt-4 justify-end">
+              <button
+                onClick={() => { setRefusId(null); setMotifRefus('') }}
+                className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={confirmerRefus}
+                disabled={!motifRefus.trim() || enCours}
+                className="px-4 py-2 text-sm bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {enCours ? 'En cours...' : 'Confirmer le refus'}
               </button>
             </div>
           </div>

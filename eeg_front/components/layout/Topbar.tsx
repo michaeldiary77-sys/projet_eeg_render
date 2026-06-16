@@ -39,15 +39,15 @@ export default function Topbar() {
       <div className="flex items-center gap-4">
         {/* Sélecteur rôle simulé */}
         <select
-          value={user.role}
-          onChange={e => setRole(e.target.value as RoleUtilisateur)}
-          className="text-xs border border-gray-200 rounded-lg px-2 py-1 text-gray-600 bg-gray-50"
-        >
-          <option value="TECHNICIEN">Technicien</option>
-          <option value="CHEF_SERVICE">Chef de service</option>
-          <option value="MAJOR_SERVICE">Major de service</option>
-          <option value="MEDECIN_SERVICE">Médecin de service</option>
-        </select>
+  value={user.role}
+  onChange={e => setRole(e.target.value as RoleUtilisateur)}
+  className="text-xs border border-gray-200 rounded-lg px-2 py-1 text-gray-600 bg-gray-50"
+>
+  <option value="MEDECIN_SERVICE">Médecin de service</option>
+  <option value="CHEF_SERVICE">Chef de service</option>
+  <option value="TECHNICIEN">Technicien</option>
+  <option value="MAJOR_SERVICE">Major de service</option>
+</select>
 
         {/* Badge notifications */}
         <div className="relative">

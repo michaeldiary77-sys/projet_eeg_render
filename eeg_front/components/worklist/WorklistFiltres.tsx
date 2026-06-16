@@ -40,6 +40,9 @@ export default function WorklistFiltres({ filtres, onChangeFiltres }: WorklistFi
         >
           <option value="">Tous les statuts</option>
           <option value="CREEE">Créée</option>
+            <option value="VALIDEE">Validée</option>
+            <option value="PLANIFIEE">Planifiée</option>
+            <option value="EN_INTERPRETATION">En interprétation</option>
           <option value="EN_ATTENTE">En attente</option>
           <option value="EN_COURS">En cours</option>
           <option value="RESULTAT_DISPONIBLE">Résultat disponible</option>

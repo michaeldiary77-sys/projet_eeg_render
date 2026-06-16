@@ -1,8 +1,20 @@
 import api from '@/lib/axios'
-import type { EegResultat, EegRectification } from '@/types/eeg/resultat'
+import type { EegResultat } from '@/types/eeg/resultat'
 
 export const getResultatByDemande = async (demandeId: string): Promise<EegResultat> => {
   const response = await api.get(`/eeg/resultats/${demandeId}`)
+  return response.data
+}
+
+export const uploadImageTrace = async (
+  demandeId: string,
+  fichier: File
+): Promise<EegResultat> => {
+  const formData = new FormData()
+  formData.append('fichier', fichier)
+  const response = await api.post(`/eeg/upload/image/${demandeId}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
   return response.data
 }
 
@@ -16,7 +28,7 @@ export const uploadTrace = async (
   if (data.dureeEnregistrement) formData.append('dureeEnregistrement', String(data.dureeEnregistrement))
   if (data.compteRendu) formData.append('compteRendu', data.compteRendu)
   if (data.estCritique !== undefined) formData.append('estCritique', String(data.estCritique))
-  const response = await api.post(`/eeg/upload/trace/${demandeId}`, formData, {
+  const response = await api.post(`/eeg/upload/image/${demandeId}`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   })
   return response.data
@@ -44,7 +56,7 @@ export const rectifierResultat = async (id: string, data: {
   nouveauRythmesDeFond?: string
   nouveauAnomalies?: string
   nouvelleConclusion?: string
-}): Promise<EegRectification> => {
+}): Promise<EegResultat> => {
   const response = await api.post(`/eeg/resultats/${id}/rectifier`, data)
   return response.data
 }

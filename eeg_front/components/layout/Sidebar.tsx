@@ -12,9 +12,9 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: 'Tableau de bord', href: '/eeg/dashboard', roles: ['TECHNICIEN', 'CHEF_SERVICE', 'MAJOR_SERVICE'], icon: '📊' },
-  { label: 'File de travail', href: '/eeg/worklist', roles: ['TECHNICIEN', 'CHEF_SERVICE', 'MAJOR_SERVICE'], icon: '📋' },
-  { label: 'Planning RDV', href: '/eeg/planning', roles: ['TECHNICIEN', 'CHEF_SERVICE', 'MAJOR_SERVICE'], icon: '📅' },
+  { label: 'Tableau de bord', href: '/eeg/dashboard', roles: ['MEDECIN_SERVICE', 'TECHNICIEN', 'CHEF_SERVICE', 'MAJOR_SERVICE'], icon: '📊' },
+  { label: 'File de travail', href: '/eeg/worklist', roles: ['MEDECIN_SERVICE', 'TECHNICIEN', 'CHEF_SERVICE', 'MAJOR_SERVICE'], icon: '📋' },
+  { label: 'Planning RDV', href: '/eeg/planning', roles: ['MEDECIN_SERVICE', 'TECHNICIEN', 'CHEF_SERVICE', 'MAJOR_SERVICE'], icon: '📅' },
   { label: 'Archives EEG', href: '/eeg/archives', roles: ['MEDECIN_SERVICE', 'TECHNICIEN', 'CHEF_SERVICE', 'MAJOR_SERVICE'], icon: '🗄️' },
   { label: 'Notifications', href: '/eeg/notifications', roles: ['MEDECIN_SERVICE', 'TECHNICIEN', 'CHEF_SERVICE', 'MAJOR_SERVICE'], icon: '🔔' },
   { label: 'Patients', href: '/eeg/patients', roles: ['MEDECIN_SERVICE', 'TECHNICIEN', 'CHEF_SERVICE', 'MAJOR_SERVICE'], icon: '👤' },

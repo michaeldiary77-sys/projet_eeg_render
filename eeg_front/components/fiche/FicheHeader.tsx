@@ -25,6 +25,9 @@ const STATUT_BADGE: Record<string, string> = {
   RESULTAT_DISPONIBLE: 'bg-emerald-100 text-emerald-700',
   ACK_RECU: 'bg-violet-100 text-violet-700',
   ANNULEE: 'bg-gray-100 text-gray-400',
+  VALIDEE: 'bg-cyan-100 text-cyan-700',
+  PLANIFIEE: 'bg-indigo-100 text-indigo-700',
+  EN_INTERPRETATION: 'bg-purple-100 text-purple-700',
 }
 
 const STATUT_LABELS: Record<string, string> = {
@@ -34,6 +37,9 @@ const STATUT_LABELS: Record<string, string> = {
   RESULTAT_DISPONIBLE: 'Résultat disponible',
   ACK_RECU: 'ACK reçu',
   ANNULEE: 'Annulée',
+  VALIDEE: 'Validée',
+  PLANIFIEE: 'Planifiée',
+  EN_INTERPRETATION: 'En interprétation',
 }
 
 export default function FicheHeader({ demande, onRefresh }: FicheHeaderProps) {
@@ -42,7 +48,7 @@ export default function FicheHeader({ demande, onRefresh }: FicheHeaderProps) {
 
   const peutAck =
     demande.statut === 'RESULTAT_DISPONIBLE' &&
-    (user.role === 'CHEF_SERVICE' || user.role === 'MEDECIN_SERVICE')
+    (user.role === 'MEDECIN_SERVICE')
 
   const handleAck = async () => {
     setEnCours(true)

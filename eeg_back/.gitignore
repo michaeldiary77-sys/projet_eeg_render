@@ -56,3 +56,17 @@ pids
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 /generated/prisma
+
+# Backups créés pendant les corrections
+*.bak
+*.bak2
+
+# Fichiers parasites
+Build
+Checking
+Cloning
+Common
+Docs
+Running
+tsc
+eeg_back@0.0.1

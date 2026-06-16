@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import { useUser } from '@/contexts/UserContext'
-import { uploadTrace } from '@/services/resultats.service'
-import { realiserRdv, marquerNonRealise } from '@/services/rdvs.service'
+import { uploadImageTrace } from '@/services/resultats.service'
+import { realiserDemande } from '@/services/demandes.service'
 import { handleApiError } from '@/lib/handleApiError'
 import { toast } from 'sonner'
 import type { DemandeEEG } from '@/types/eeg/demande'
@@ -16,21 +16,30 @@ interface TabBRealisationProps {
 export default function TabBRealisation({ demande, onRefresh }: TabBRealisationProps) {
   const { user } = useUser()
   const [fichier, setFichier] = useState<File | null>(null)
-  const [duree, setDuree] = useState('')
-  const [compteRendu, setCompteRendu] = useState('')
-  const [estCritique, setEstCritique] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [progression, setProgression] = useState(0)
+  const [enCours, setEnCours] = useState(false)
 
   const lectureSeule = user.role === 'MEDECIN_SERVICE'
+  const estTechnicien = user.role === 'TECHNICIEN'
   const resultat = demande.resultat
-  const rdv = demande.rdv
+  const peutRealiser = demande.statut === 'PLANIFIEE' || (demande.statut === 'CREEE' && demande.urgence === 'STAT')
+  const peutUploader = !resultat?.nomFichierImage
 
   const handleFichier = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]
     if (!f) return
-    if (!f.name.toLowerCase().endsWith('.edf')) {
-      toast.error('Seuls les fichiers .edf sont acceptés')
+    
+    // Validation format : PNG ou JPG uniquement (flow officiel)
+    const formatsAcceptes = ['image/png', 'image/jpeg']
+    if (!formatsAcceptes.includes(f.type)) {
+      toast.error('Seuls les fichiers PNG ou JPG sont acceptés')
+      return
+    }
+    // Taille max : 10 Mo (flow officiel)
+    const tailleMax = 10 * 1024 * 1024
+    if (f.size > tailleMax) {
+      toast.error('Le fichier ne doit pas dépasser 10 Mo')
       return
     }
     setFichier(f)
@@ -41,18 +50,14 @@ export default function TabBRealisation({ demande, onRefresh }: TabBRealisationP
     setUploading(true)
     setProgression(0)
     try {
-      // Simulation progression
       const interval = setInterval(() => {
         setProgression(p => Math.min(p + 10, 90))
       }, 200)
-      await uploadTrace(demande.id, fichier, {
-        dureeEnregistrement: duree ? parseInt(duree) : undefined,
-        compteRendu: compteRendu || undefined,
-        estCritique,
-      })
+      // Upload simple : juste l'image (flow officiel)
+      await uploadImageTrace(demande.id, fichier)
       clearInterval(interval)
       setProgression(100)
-      toast.success('Fichier EDF uploadé avec succès')
+      toast.success('Image uploadée avec succès ✅')
       onRefresh()
     } catch (error) {
       toast.error(handleApiError(error))
@@ -62,52 +67,44 @@ export default function TabBRealisation({ demande, onRefresh }: TabBRealisationP
   }
 
   const handleRealiser = async () => {
-    if (!rdv) return
+    setEnCours(true)
     try {
-      await realiserRdv(rdv.id, user.id)
-      toast.success('RDV marqué comme réalisé')
+      // Endpoint correct selon le flow officiel : PATCH /eeg/demandes/:id/realiser
+      await realiserDemande(demande.id)
+      toast.success('Examen marqué comme réalisé ✅')
       onRefresh()
     } catch (error) {
       toast.error(handleApiError(error))
-    }
-  }
-
-  const handleNonRealise = async () => {
-    if (!rdv) return
-    try {
-      await marquerNonRealise(rdv.id)
-      toast.success('RDV marqué comme non réalisé')
-      onRefresh()
-    } catch (error) {
-      toast.error(handleApiError(error))
+    } finally {
+      setEnCours(false)
     }
   }
 
   return (
     <div className="space-y-6">
-      {/* Upload fichier EDF */}
+      {/* Section Upload image */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-        <h3 className="font-semibold text-gray-800 mb-4">📁 Fichier trace EDF</h3>
+        <h3 className="font-semibold text-gray-800 mb-4">📁 Image trace EEG</h3>
 
-        {resultat?.nomFichierOriginal ? (
-          <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-lg border border-emerald-200">
+        {resultat?.nomFichierImage && (
+          <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-lg border border-emerald-200 mb-4">
             <span className="text-emerald-600 text-xl">✅</span>
             <div>
-              <p className="text-sm font-medium text-emerald-700">Fichier déjà uploadé</p>
-              <p className="text-xs text-emerald-600 font-mono">{resultat.nomFichierOriginal}</p>
+              <p className="text-sm font-medium text-emerald-700">Image déjà uploadée</p>
+              <p className="text-xs text-emerald-600 font-mono">{resultat.nomFichierImage}</p>
             </div>
           </div>
-        ) : null}
+        )}
 
-        {!lectureSeule && (
-          <div className="mt-4 space-y-4">
+        {!lectureSeule && peutUploader && (
+          <div className="space-y-4">
             <div>
               <label className="block text-xs text-gray-500 mb-1.5">
-                Fichier EDF <span className="text-red-500">*</span>
+                Image trace (PNG ou JPG, max 10 Mo) <span className="text-red-500">*</span>
               </label>
               <input
                 type="file"
-                accept=".edf"
+                accept="image/png,image/jpeg"
                 onChange={handleFichier}
                 className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[#eaddff] file:text-[#6750a4] hover:file:bg-[#d0bcff] cursor-pointer"
               />
@@ -116,31 +113,6 @@ export default function TabBRealisation({ demande, onRefresh }: TabBRealisationP
                   📄 {fichier.name} ({(fichier.size / 1024 / 1024).toFixed(2)} Mo)
                 </p>
               )}
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs text-gray-500 mb-1.5">Durée enregistrement (min)</label>
-                <input
-                  type="number"
-                  value={duree}
-                  onChange={e => setDuree(e.target.value)}
-                  placeholder="Ex: 30"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6750a4]"
-                />
-              </div>
-              <div className="flex items-center gap-2 mt-5">
-                <input
-                  type="checkbox"
-                  id="critique"
-                  checked={estCritique}
-                  onChange={e => setEstCritique(e.target.checked)}
-                  className="w-4 h-4 accent-[#6750a4]"
-                />
-                <label htmlFor="critique" className="text-sm text-gray-700 cursor-pointer">
-                  Résultat critique 🚨
-                </label>
-              </div>
             </div>
 
             {uploading && (
@@ -157,47 +129,54 @@ export default function TabBRealisation({ demande, onRefresh }: TabBRealisationP
               disabled={!fichier || uploading}
               className="px-5 py-2.5 bg-[#6750a4] text-white text-sm font-semibold rounded-xl hover:bg-[#5a4490] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {uploading ? `Upload en cours... ${progression}%` : '⬆️ Uploader le fichier EDF'}
+              {uploading ? `Upload en cours... ${progression}%` : "⬆️ Uploader l'image"}
             </button>
           </div>
         )}
       </div>
 
-      {/* Statut RDV */}
-      {rdv && (
+      {/* Section Réaliser - TECHNICIEN uniquement */}
+      {estTechnicien && peutRealiser && (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-          <h3 className="font-semibold text-gray-800 mb-4">📅 Statut du RDV</h3>
+          <h3 className="font-semibold text-gray-800 mb-4">🔬 Réalisation de l'examen</h3>
           <div className="flex items-center gap-3 mb-4">
             <span className="text-sm text-gray-600">Statut actuel :</span>
-            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-              rdv.statut === 'REALISE'
-                ? 'bg-emerald-100 text-emerald-700'
-                : rdv.statut === 'NON_REALISE'
-                ? 'bg-red-100 text-red-700'
-                : rdv.statut === 'ANNULE'
-                ? 'bg-gray-100 text-gray-400'
-                : 'bg-yellow-100 text-yellow-700'
+            <span className={`text-xs font-bold px-3 py-1 rounded-full ${
+              demande.statut === 'PLANIFIEE' ? 'bg-cyan-100 text-cyan-700' :
+              demande.statut === 'CREEE' ? 'bg-red-100 text-red-700' :
+              'bg-blue-100 text-blue-700'
             }`}>
-              {rdv.statut}
+              {demande.statut}
             </span>
           </div>
 
-          {!lectureSeule && rdv.statut === 'EN_ATTENTE' && (
-            <div className="flex gap-3">
-              <button
-                onClick={handleRealiser}
-                className="px-4 py-2 bg-emerald-500 text-white text-sm font-semibold rounded-xl hover:bg-emerald-600 transition-colors"
-              >
-                ✅ Réalisé
-              </button>
-              <button
-                onClick={handleNonRealise}
-                className="px-4 py-2 bg-red-100 text-red-700 text-sm font-semibold rounded-xl hover:bg-red-200 transition-colors"
-              >
-                ❌ Pas encore
-              </button>
-            </div>
+          {resultat?.nomFichierImage ? (
+            <p className="text-sm text-emerald-700 mb-4 bg-emerald-50 p-3 rounded-lg border border-emerald-200">
+              ✅ Image uploadée. Vous pouvez maintenant marquer l'examen comme réalisé.
+            </p>
+          ) : (
+            <p className="text-sm text-amber-700 mb-4 bg-amber-50 p-3 rounded-lg border border-amber-200">
+              ⚠️ Vous devez d'abord uploader l'image trace avant de marquer l'examen comme réalisé.
+            </p>
           )}
+
+          <div className="flex justify-end">
+            <button
+              onClick={handleRealiser}
+              disabled={enCours || !resultat?.nomFichierImage}
+              className="px-6 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+            >
+              {enCours ? 'En cours...' : '✅ Marquer comme réalisé'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {lectureSeule && (
+        <div className="p-3 bg-gray-50 rounded-xl border border-gray-200">
+          <p className="text-sm text-gray-500 text-center">
+            🔒 Lecture seule — votre rôle ne permet pas de réaliser l'examen
+          </p>
         </div>
       )}
     </div>
