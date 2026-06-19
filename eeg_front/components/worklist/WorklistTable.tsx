@@ -234,6 +234,7 @@ export default function WorklistTable({ demandes, onRefresh }: WorklistTableProp
                         📅 Planifier
 
                       </button>
+                    )}
                     {demande.statut === "RESULTAT_DISPONIBLE" && user?.role === "MEDECIN_SERVICE" && (
                       <button
                         onClick={async (e) => {
