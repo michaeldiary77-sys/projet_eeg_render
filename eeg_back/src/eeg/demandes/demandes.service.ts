@@ -105,6 +105,44 @@ export class DemandesService {
   async planifierRdv(id: string, dto: any, chefId: string) {
     const d = await this.getDemandeById(id);
     if (d.statut !== 'VALIDEE') throw new BadRequestException(`Statut invalide: ${d.statut}`);
+  // === BLOC AJOUTÉ : Si créneau fourni par le CHEF, l'utiliser directement ===
+  if (dto.dateRDV && dto.heureDebut && dto.salle) {
+    const dateRdv = new Date(dto.dateRDV);
+    const conflit = await this.prisma.eegRdv.findFirst({
+      where: {
+        dateRdv: dateRdv,
+        heureDebut: dto.heureDebut,
+        salle: dto.salle,
+      },
+    });
+    if (conflit) throw new BadRequestException('Créneau déjà occupé');
+
+    const heureNum = parseInt(dto.heureDebut.split(':')[0]);
+    const heureFin = `${String(heureNum + 1).padStart(2, '0')}:00`;
+
+    await this.prisma.eegRdv.create({
+      data: {
+        patientId: d.patientId,
+        prescripteurId: d.prescripteurId,
+        demandeId: id,
+        typeEEG: d.typeEEG,
+        salle: dto.salle,
+        priorite: d.urgence,
+        dateRdv: dateRdv,
+        heureDebut: dto.heureDebut,
+        heureFin: heureFin,
+        dureeMinutes: 60,
+        renseignementClinique: d.motifPrescription,
+      },
+    });
+
+    return this.prisma.eegDemande.update({
+      where: { id },
+      data: { statut: 'PLANIFIEE', dateRDV: dateRdv },
+    });
+  }
+  // === FIN BLOC AJOUTÉ ===
+
 
     const maintenant = new Date();
     const jPlus2 = new Date(maintenant);
