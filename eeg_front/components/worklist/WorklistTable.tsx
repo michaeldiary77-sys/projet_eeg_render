@@ -210,9 +210,8 @@ export default function WorklistTable({ demandes, onRefresh }: WorklistTableProp
                       >
                         ❌ Refuser
                       </button>
+                      <button
                         onClick={(e) => { e.stopPropagation(); setSlotPickerOpen(true); setDemandeToPlan(demande); }}
-                          }
-                        }}
                         className="text-xs bg-cyan-500 hover:bg-cyan-600 text-white font-medium px-3 py-1 rounded-lg transition-colors mr-2"
                       >
                         Planifier
