@@ -7,7 +7,6 @@ import { annulerDemande, validerDemande, refuserDemande, accuserReception, reali
 import { handleApiError } from '@/lib/handleApiError'
 import { toast } from 'sonner'
 import type { DemandeEEG } from '@/types/eeg/demande'
-import SlotPickerModal from './SlotPickerModal'
 
 interface WorklistTableProps {
   demandes: DemandeEEG[]
@@ -78,8 +77,6 @@ export default function WorklistTable({ demandes, onRefresh }: WorklistTableProp
   const [refusId, setRefusId] = useState<string | null>(null)
   const [motifRefus, setMotifRefus] = useState('')
   const [enCours, setEnCours] = useState(false)
-  const [slotPickerOpen, setSlotPickerOpen] = useState(false)
-  const [demandeToPlan, setDemandeToPlan] = useState<DemandeEEG | null>(null)
 
   const confirmerAnnulation = useCallback(async () => {
     if (!annulationId || !motif.trim()) return
@@ -112,6 +109,21 @@ export default function WorklistTable({ demandes, onRefresh }: WorklistTableProp
       setEnCours(false)
     }
   }, [refusId, motifRefus, onRefresh])
+  const handleConfirmSlot = async (slot: { dateRDV: string; heureDebut: string; salle: string }) => {
+    if (!demandeToPlan) return
+    try {
+      const { planifierRdv } = await import('@/services/demandes.service')
+      await planifierRdv(demandeToPlan.id, slot)
+      toast.success('RDV planifié ✅')
+      setSlotPickerOpen(false)
+      setDemandeToPlan(null)
+      onRefresh()
+      window.location.href = `/eeg/planning?demandeId=${demandeToPlan.id}`
+    } catch (err) {
+      toast.error(handleApiError(err))
+    }
+  }
+
 
   if (demandes.length === 0) {
     return (
@@ -213,13 +225,21 @@ export default function WorklistTable({ demandes, onRefresh }: WorklistTableProp
                     )}
                     {demande.statut === "VALIDEE" && user?.role === "CHEF_SERVICE" && (
                       <button
-                        onClick={(e) => { e.stopPropagation(); setSlotPickerOpen(true); setDemandeToPlan(demande); }}
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          try {
+                            const { planifierRdv } = await import("@/services/demandes.service");
+                            await planifierRdv(demande.id, { dateRDV: new Date(Date.now() + 2  *24*  60  *60*  1000).toISOString() });
+                            window.location.href = `/eeg/planning?demandeId=${demande.id}`;
+                          } catch (err) {
+                            toast.error(handleApiError(err));
+                          }
+                        }}
                         className="text-xs bg-cyan-500 hover:bg-cyan-600 text-white font-medium px-3 py-1 rounded-lg transition-colors mr-2"
                       >
-                        📅 Planifier
+                        Planifier
                       </button>
                     )}
-
                     {demande.statut === "RESULTAT_DISPONIBLE" && user?.role === "MEDECIN_SERVICE" && (
                       <button
                         onClick={async (e) => {
@@ -330,14 +350,6 @@ export default function WorklistTable({ demandes, onRefresh }: WorklistTableProp
             </div>
           </div>
         </div>
-      )}
-
-      {slotPickerOpen && demandeToPlan && (
-        <SlotPickerModal
-          demande={demandeToPlan}
-          onClose={() => { setSlotPickerOpen(false); setDemandeToPlan(null) }}
-          onConfirm={handleConfirmSlot}
-        />
       )}
     </>
   )
