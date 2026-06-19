@@ -118,7 +118,7 @@ export default function WorklistTable({ demandes, onRefresh }: WorklistTableProp
       setSlotPickerOpen(false)
       setDemandeToPlan(null)
       onRefresh()
-      window.location.href = `/eeg/planning?demandeId=${demandeToPlan.id}`
+      window.location.href = `/eeg/planning?date=${slot.dateRDV.split('T')[0]}&demandeId=${demandeToPlan.id}`
     } catch (err) {
       toast.error(handleApiError(err))
     }
