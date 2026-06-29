@@ -34,28 +34,19 @@ export class ExternalPrescriptionService {
       );
 
       // Step 2: Get or create prescripteur (can be external too)
-      let prescripteur = await this.prisma.utilisateur.findUnique({
+      const prescripteur = await this.prisma.utilisateur.upsert({
         where: { id: dto.prescripteurId },
+        update: {},  // rien à mettre à jour
+        create: {
+          id: dto.prescripteurId,
+          nom: 'Prescripteur',
+          prenom: 'Externe',
+          email: `prescripteur-${dto.prescripteurId}@chu.local`,
+          password: 'EXTERNAL',
+          role: 'TECHNICIEN',
+          actif: true,
+        },
       });
-
-      if (!prescripteur) {
-        // Create a minimal external prescripteur if not found
-        prescripteur = await this.prisma.utilisateur.create({
-          data: {
-            id: dto.prescripteurId,
-            nom: 'Prescripteur',
-            prenom: 'Externe',
-            email: `prescripteur-${dto.prescripteurId}@chu.local`,
-            password: 'EXTERNAL',
-            role: 'TECHNICIEN',
-            actif: true,
-          },
-        });
-
-        this.logger.log(
-          `Created external prescripteur: ${prescripteur.id}`,
-        );
-      }
 
       // Step 3: Create the EEG demand directly using Prisma
       const demande = await this.prisma.eegDemande.create({
