@@ -1,28 +1,115 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useUser } from '@/contexts/UserContext'
-import { getNotificationsCount } from '@/services/notifications.service'
+import { getNotifications } from '@/services/notifications.service'
 import type { RoleUtilisateur } from '@/types/eeg/utilisateur'
+import type { NiveauNotification } from '@/types/eeg/notification'
 
-const ROLE_LABELS: Record<RoleUtilisateur, string> = {  MEDECIN_SERVICE: 'Médecin',
+const ROLE_LABELS: Record<RoleUtilisateur, string> = {  
+  MEDECIN_SERVICE: 'Médecin',
   TECHNICIEN: 'Technicien',
   CHEF_SERVICE: 'Chef de service',
   MAJOR_SERVICE: 'Major de service',
 }
 
+const playSound = (niveau: NiveauNotification) => {
+  try {
+    const AudioContext = window.AudioContext || (window as any).webkitAudioContext
+    if (!AudioContext) return
+    
+    const ctx = new AudioContext()
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    
+    osc.connect(gain)
+    gain.connect(ctx.destination)
+    
+    if (niveau === 'STAT') {
+      osc.type = 'square'
+      osc.frequency.setValueAtTime(880, ctx.currentTime) // A5, high pitch
+      gain.gain.setValueAtTime(0, ctx.currentTime)
+      for (let i = 0; i < 3; i++) {
+        const t = ctx.currentTime + i * 0.25
+        gain.gain.setValueAtTime(1, t)
+        gain.gain.setValueAtTime(0, t + 0.15)
+      }
+      osc.start(ctx.currentTime)
+      osc.stop(ctx.currentTime + 0.8)
+    } else if (niveau === 'URGENTE') {
+      osc.type = 'triangle'
+      osc.frequency.setValueAtTime(660, ctx.currentTime) // E5
+      gain.gain.setValueAtTime(0, ctx.currentTime)
+      for (let i = 0; i < 2; i++) {
+        const t = ctx.currentTime + i * 0.4
+        gain.gain.setValueAtTime(0.8, t)
+        gain.gain.setValueAtTime(0, t + 0.2)
+      }
+      osc.start(ctx.currentTime)
+      osc.stop(ctx.currentTime + 0.9)
+    } else {
+      osc.type = 'sine'
+      osc.frequency.setValueAtTime(440, ctx.currentTime) // A4
+      gain.gain.setValueAtTime(0, ctx.currentTime)
+      gain.gain.setValueAtTime(0.5, ctx.currentTime)
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5)
+      osc.start(ctx.currentTime)
+      osc.stop(ctx.currentTime + 0.5)
+    }
+  } catch (err) {
+    console.warn('AudioContext not allowed or not supported:', err)
+  }
+}
+
 export default function Topbar() {
   const { user, setRole } = useUser()
   const [nonLues, setNonLues] = useState(0)
+  const knownIdsRef = useRef<Set<string>>(new Set())
+  const isInitialLoad = useRef(true)
 
   useEffect(() => {
-    const fetchCount = async () => {
+    const fetchNotifications = async () => {
       try {
-        const data = await getNotificationsCount()
-        setNonLues(data.nonLues)
-      } catch {}
+        const unread = await getNotifications(false)
+        setNonLues(unread.length)
+        
+        if (isInitialLoad.current) {
+          unread.forEach(n => knownIdsRef.current.add(n.id))
+          isInitialLoad.current = false
+          return
+        }
+        
+        let highestNewUrgency: NiveauNotification | null = null
+        
+        unread.forEach(notif => {
+          if (!knownIdsRef.current.has(notif.id)) {
+            if (notif.niveau === 'STAT') {
+              highestNewUrgency = 'STAT'
+            } else if (notif.niveau === 'URGENTE' && highestNewUrgency !== 'STAT') {
+              highestNewUrgency = 'URGENTE'
+            } else if (notif.niveau === 'NORMALE' && !highestNewUrgency) {
+              highestNewUrgency = 'NORMALE'
+            }
+            knownIdsRef.current.add(notif.id)
+          }
+        })
+        
+        const unreadIds = new Set(unread.map(n => n.id))
+        for (const id of knownIdsRef.current) {
+          if (!unreadIds.has(id)) {
+            knownIdsRef.current.delete(id)
+          }
+        }
+
+        if (highestNewUrgency) {
+          playSound(highestNewUrgency)
+        }
+      } catch (err) {
+        console.error('Erreur chargement notifications:', err)
+      }
     }
-    fetchCount()
-    const interval = setInterval(fetchCount, 30000)
+    
+    fetchNotifications()
+    const interval = setInterval(fetchNotifications, 15000) // Aligné sur le délai de notifications
     return () => clearInterval(interval)
   }, [])
 

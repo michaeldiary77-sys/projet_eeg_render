@@ -56,7 +56,7 @@ export default function WorklistPage() {
 
   useEffect(() => {
     charger()
-    const interval = setInterval(charger, 60000)
+    const interval = setInterval(charger, 20000)
     return () => clearInterval(interval)
   }, [charger])
 

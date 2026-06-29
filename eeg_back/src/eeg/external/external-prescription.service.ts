@@ -66,6 +66,20 @@ export class ExternalPrescriptionService {
         `Created EEG demand: ${demande.id} for patient ${patient.externalPatientId || patient.id}`,
       );
 
+      // Step 3.5 : Créer notification locale (pour l'affichage dans le frontend EEG)
+      await this.prisma.eegNotification.create({
+        data: {
+          type: 'SYSTEME',
+          titre: `Nouvelle prescription EEG — ${dto.typeEEG}`,
+          message: `Patient ${dto.patientId} — ${dto.renseignements?.substring(0, 100) ?? ''}`,
+          niveau: dto.urgence === 'STAT' ? 'STAT' : dto.urgence === 'URGENTE' ? 'URGENTE' : 'NORMALE',
+          lu: false,
+          patientId: patient.id,
+          demandeId: demande.id,
+          horodatage: new Date(),
+        },
+      });
+
       // Step 4: Send notification (fire-and-forget, non-blocking)
       const serviceInfo = await this.chuClient.getMyServiceInfo();
       const serviceNom = serviceInfo?.name || 'EEG';

@@ -27,6 +27,8 @@ export default function NotificationsPage() {
 
   useEffect(() => {
     charger()
+    const interval = setInterval(charger, 15000)
+    return () => clearInterval(interval)
   }, [charger])
 
   const handleToutLire = async () => {

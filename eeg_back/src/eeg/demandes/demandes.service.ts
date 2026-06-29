@@ -16,7 +16,7 @@ export class DemandesService {
       case 'MEDECIN_SERVICE':
         return {
           aValider: await this.prisma.eegDemande.findMany({
-            where: { statut: 'CREEE', urgence: { not: 'STAT' } },
+            where: { statut: 'CREEE' },
             include: { patient: true, prescripteur: true },
             orderBy: { dateCreation: 'asc' },
           }),
