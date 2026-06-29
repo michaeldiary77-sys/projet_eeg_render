@@ -3,8 +3,8 @@ import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 
 export interface ChuServiceInfo {
-  id: string;
-  nom?: string;
+  serviceId: string;
+  name?: string;
   chuId?: string;
   [key: string]: any;
 }
@@ -17,7 +17,7 @@ export class ChuClientService {
   private readonly serviceId: string;
 
   constructor(private readonly httpService: HttpService) {
-    this.baseUrl = process.env.CHU_API_URL || 'https://service-chu-back-production-d6a8.up.railway.app/service-chu/api';
+    this.baseUrl = process.env.CHU_API_URL || 'https://service-chu-back-production-d6a8.up.railway.app/service-chu';
     this.chuId = process.env.CHU_ID || '72d49761-2a65-446d-b025-15a74cac1ad4';
     this.serviceId = process.env.EEG_SERVICE_ID || '9d965b9f-4737-435f-abe9-73db0d3cf973';
   }

@@ -77,7 +77,7 @@ export class ExternalPrescriptionService {
 
       // Step 4: Send notification (fire-and-forget, non-blocking)
       const serviceInfo = await this.chuClient.getMyServiceInfo();
-      const serviceNom = serviceInfo?.nom || 'EEG';
+      const serviceNom = serviceInfo?.name || 'EEG';
 
       this.notificationExternal.sendNotification({
         type: 'NOUVELLE_DEMANDE',
