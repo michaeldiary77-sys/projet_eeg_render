@@ -1,7 +1,6 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { PatientLookupService } from '../patients/patient-lookup.service';
-import { DemandesService } from '../demandes/demandes.service';
 import { ExternalEegPrescriptionDto } from '../demandes/dto/external-prescription.dto';
 
 @Injectable()
@@ -11,7 +10,6 @@ export class ExternalPrescriptionService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly patientLookup: PatientLookupService,
-    private readonly demandesService: DemandesService,
   ) {}
 
   /**
@@ -55,18 +53,19 @@ export class ExternalPrescriptionService {
         );
       }
 
-      // Step 3: Create the EEG demand using the existing service
-      const demande = await this.demandesService.creerDemande(
-        {
+      // Step 3: Create the EEG demand directly using Prisma
+      const demande = await this.prisma.eegDemande.create({
+        data: {
           patientId: patient.id,
+          prescripteurId: prescripteur.id,
           typeEEG: dto.typeEEG,
           urgence: dto.urgence || 'NORMALE',
           motifPrescription: dto.renseignements,
           episodeSoinsId: dto.episodeSoinsId || dto.chuId || `EXTERNAL-${Date.now()}`,
-          patient: dto.patient,
+          numeroEEG: `EEG-${Date.now()}`,
         },
-        prescripteur.id,
-      );
+        include: { patient: true, prescripteur: true },
+      });
 
       this.logger.log(
         `Created EEG demand: ${demande.id} for patient ${patient.externalPatientId || patient.id}`,
