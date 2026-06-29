@@ -130,6 +130,7 @@ export default function Topbar() {
   className="text-xs border border-gray-200 rounded-lg px-2 py-1 text-gray-600 bg-gray-50"
 >
   <option value="CHEF_SERVICE">Chef de service</option>
+  <option value="MEDECIN_SERVICE">Médecin de service</option>
   <option value="TECHNICIEN">Technicien</option>
   <option value="MAJOR_SERVICE">Major de service</option>
 </select>

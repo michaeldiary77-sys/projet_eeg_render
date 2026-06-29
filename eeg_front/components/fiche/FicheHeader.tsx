@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { useUser } from '@/contexts/UserContext'
-import { accuserReception } from '@/services/demandes.service'
+import { accuserReception, planifierRdv } from '@/services/demandes.service'
+import SlotPickerModal from '@/components/worklist/SlotPickerModal'
 import { handleApiError } from '@/lib/handleApiError'
 import { toast } from 'sonner'
 import type { DemandeEEG } from '@/types/eeg/demande'
@@ -45,6 +46,12 @@ const STATUT_LABELS: Record<string, string> = {
 export default function FicheHeader({ demande, onRefresh }: FicheHeaderProps) {
   const { user } = useUser()
   const [enCours, setEnCours] = useState(false)
+  const [showSlotPicker, setShowSlotPicker] = useState(false)
+
+  const peutPlanifier =
+    ['CREEE', 'EN_ATTENTE'].includes(demande.statut) &&
+    ['CHEF_SERVICE', 'MAJOR_SERVICE'].includes(user.role) &&
+    !demande.rdv
 
   const peutAck =
     demande.statut === 'RESULTAT_DISPONIBLE' &&
@@ -61,6 +68,13 @@ export default function FicheHeader({ demande, onRefresh }: FicheHeaderProps) {
     } finally {
       setEnCours(false)
     }
+  }
+
+  const handlePlanifier = async (slot: { dateRDV: string; heureDebut: string; salle: string }) => {
+    await planifierRdv(demande.id, slot)
+    toast.success('RDV planifié avec succès')
+    setShowSlotPicker(false)
+    onRefresh()
   }
 
   const patient = demande.patient
@@ -128,22 +142,41 @@ export default function FicheHeader({ demande, onRefresh }: FicheHeaderProps) {
           </div>
         </div>
 
-        {/* Bouton ACK */}
-        {peutAck && (
-          <button
-            onClick={handleAck}
-            disabled={enCours}
-            className="shrink-0 flex items-center gap-2 px-5 py-2.5 bg-[#6750a4] text-white text-sm font-semibold rounded-xl hover:bg-[#5a4490] disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
-          >
-            {enCours ? (
-              <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            ) : (
-              '📬'
-            )}
-            Accuser réception
-          </button>
-        )}
+        <div className="shrink-0 flex items-center gap-3">
+          {peutPlanifier && (
+            <button
+              onClick={() => setShowSlotPicker(true)}
+              className="shrink-0 flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 transition-colors shadow-sm"
+            >
+              📅 Planifier RDV
+            </button>
+          )}
+
+          {/* Bouton ACK */}
+          {peutAck && (
+            <button
+              onClick={handleAck}
+              disabled={enCours}
+              className="shrink-0 flex items-center gap-2 px-5 py-2.5 bg-[#6750a4] text-white text-sm font-semibold rounded-xl hover:bg-[#5a4490] disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+            >
+              {enCours ? (
+                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                '📬'
+              )}
+              Accuser réception
+            </button>
+          )}
+        </div>
       </div>
+
+      {showSlotPicker && (
+        <SlotPickerModal
+          demande={demande}
+          onClose={() => setShowSlotPicker(false)}
+          onConfirm={handlePlanifier}
+        />
+      )}
     </div>
   )
 }

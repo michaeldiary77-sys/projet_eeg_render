@@ -201,7 +201,7 @@ export default function WorklistTable({ demandes, onRefresh }: WorklistTableProp
                     )}
                   </td>
                   <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
-                    {demande.statut === "CREEE" && user?.role === "TECHNICIEN" && demande.urgence !== "STAT" && (
+                    {demande.statut === "CREEE" && ['TECHNICIEN', 'CHEF_SERVICE', 'MEDECIN_SERVICE'].includes(user?.role || '') && demande.urgence !== "STAT" && (
                       <button
                         onClick={async (e) => {
                           e.stopPropagation()

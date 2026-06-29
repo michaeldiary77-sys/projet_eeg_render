@@ -37,7 +37,11 @@ export default function WorklistPage() {
       } else if (user.role === 'TECHNICIEN') {
         demandesArray = [...(data.statUrgents || []), ...(data.rdvDuJour || [])]
       } else if (user.role === 'CHEF_SERVICE') {
-        demandesArray = [...(data.aPlanifier || []), ...(data.aValiderCR || [])]
+        demandesArray = [
+          ...(data.aValider || []),
+          ...(data.aPlanifier || []),
+          ...(data.aValiderCR || []),
+        ]
       } else if (user.role === 'MAJOR_SERVICE') {
         demandesArray = data.toutes || []
       } else {
