@@ -19,7 +19,7 @@ export class PatientsController {
 
   @Get()
   async getPatients(@Query('search') search?: string) {
-    return this.prisma.patient.findMany({
+    const patients = await this.prisma.patient.findMany({
       where: search
         ? {
             OR: [
@@ -35,11 +35,19 @@ export class PatientsController {
       },
       orderBy: { nom: 'asc' },
     });
+
+    return Promise.all(
+      patients.map(async (p) => {
+        if (!p.isExternal) return p;
+        const info = await this.patientLookup.getPatientInfoWithExternalLookup(p);
+        return { ...p, nom: info.nom, prenom: info.prenom, age: info.age, sexe: info.sexe };
+      })
+    );
   }
 
   @Get('dossier/:idDossier')
   async getPatientByDossier(@Param('idDossier') idDossier: string) {
-    return this.prisma.patient.findUnique({
+    const patient = await this.prisma.patient.findUnique({
       where: { idDossier },
       include: {
         demandes: {
@@ -49,6 +57,11 @@ export class PatientsController {
         _count: { select: { demandes: true, rdvs: true } },
       },
     });
+
+    if (!patient) return null;
+    if (!patient.isExternal) return patient;
+    const info = await this.patientLookup.getPatientInfoWithExternalLookup(patient);
+    return { ...patient, nom: info.nom, prenom: info.prenom, age: info.age, sexe: info.sexe };
   }
 
   @Get('external/:externalPatientId')
@@ -74,20 +87,23 @@ export class PatientsController {
         _count: { select: { demandes: true, rdvs: true } },
       },
     });
-    return patient;
+
+    if (!patient) return null;
+    const info = await this.patientLookup.getPatientInfoWithExternalLookup(patient);
+    return { ...patient, nom: info.nom, prenom: info.prenom, age: info.age, sexe: info.sexe };
   }
 
   @Get(':id')
   async getPatientById(@Param('id') id: string) {
     // Support both local UUID and external patient ID
-    const patient = await this.patientLookup.findPatientByIdOrExternal(id);
+    const foundPatient = await this.patientLookup.findPatientByIdOrExternal(id);
 
-    if (!patient) {
+    if (!foundPatient) {
       return null;
     }
 
-    return this.prisma.patient.findUnique({
-      where: { id: patient.id },
+    const patient = await this.prisma.patient.findUnique({
+      where: { id: foundPatient.id },
       include: {
         demandes: {
           orderBy: { dateCreation: 'desc' },
@@ -105,6 +121,11 @@ export class PatientsController {
         _count: { select: { demandes: true, rdvs: true } },
       },
     });
+
+    if (!patient) return null;
+    if (!patient.isExternal) return patient;
+    const info = await this.patientLookup.getPatientInfoWithExternalLookup(patient);
+    return { ...patient, nom: info.nom, prenom: info.prenom, age: info.age, sexe: info.sexe };
   }
 
   @Post()

@@ -19,7 +19,7 @@ export class AccueilClientService {
   private readonly chuId: string;
 
   constructor(private readonly httpService: HttpService) {
-    this.baseUrl = process.env.ACCUEIL_API_URL || 'https://acceuil-back-production.up.railway.app/accueil/api';
+    this.baseUrl = process.env.ACCUEIL_API_URL || 'https://acceuil-back-production.up.railway.app/accueil';
     this.chuId = process.env.CHU_ID || '72d49761-2a65-446d-b025-15a74cac1ad4';
   }
 

@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { PatientLookupService } from '../patients/patient-lookup.service';
 import { ExternalEegPrescriptionDto } from '../demandes/dto/external-prescription.dto';
 import { NotificationExternalService } from './notification-external.service';
+import { ChuClientService } from '../../common/clients/chu-client.service';
 
 @Injectable()
 export class ExternalPrescriptionService {
@@ -12,6 +13,7 @@ export class ExternalPrescriptionService {
     private readonly prisma: PrismaService,
     private readonly patientLookup: PatientLookupService,
     private readonly notificationExternal: NotificationExternalService,
+    private readonly chuClient: ChuClientService,
   ) {}
 
   /**
@@ -74,12 +76,15 @@ export class ExternalPrescriptionService {
       );
 
       // Step 4: Send notification (fire-and-forget, non-blocking)
+      const serviceInfo = await this.chuClient.getMyServiceInfo();
+      const serviceNom = serviceInfo?.nom || 'EEG';
+
       this.notificationExternal.sendNotification({
         type: 'NOUVELLE_DEMANDE',
         motif: `Nouvelle demande EEG (externe) pour patient ${dto.patientId}`,
         urgence: dto.urgence === 'STAT' ? 3 : dto.urgence === 'URGENTE' ? 2 : 1,
         sourceServiceId: process.env.EEG_SERVICE_ID,
-        sourceServiceName: 'EEG',
+        sourceServiceName: serviceNom,
         patientId: patient.id,
         sentAt: new Date().toISOString(),
       }).catch((err) => this.logger.warn(`Notification non envoyée: ${err.message}`));
