@@ -10,12 +10,16 @@ import {
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { ExternalPrescriptionService } from './external-prescription.service';
 import { ExternalEegPrescriptionDto } from '../demandes/dto/external-prescription.dto';
+import { PatientLookupService } from '../patients/patient-lookup.service';
+import { PrismaService } from '../../prisma/prisma.service';
 
 @ApiTags('External - Prescriptions')
 @Controller('eeg/external')
 export class ExternalPrescriptionController {
   constructor(
     private readonly externalPrescriptionService: ExternalPrescriptionService,
+    private readonly patientLookup: PatientLookupService,
+    private readonly prisma: PrismaService,
   ) {}
 
   @Post('prescription')
@@ -96,7 +100,7 @@ export class ExternalPrescriptionController {
   async getPrescriptionsForExternalPatient(
     @Param('externalPatientId') externalPatientId: string,
   ) {
-    const patient = await this.externalPrescriptionService['patientLookup']?.findPatientByIdOrExternal(
+    const patient = await this.patientLookup.findPatientByIdOrExternal(
       externalPatientId,
     );
 
@@ -111,7 +115,7 @@ export class ExternalPrescriptionController {
     return {
       externalPatientId,
       patientId: patient.id,
-      prescriptions: await this.externalPrescriptionService['prisma']?.eegDemande.findMany({
+      prescriptions: await this.prisma.eegDemande.findMany({
         where: { patientId: patient.id },
         select: {
           id: true,

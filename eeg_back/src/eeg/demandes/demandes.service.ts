@@ -264,7 +264,7 @@ export class DemandesService {
       type: "DEMANDE_EXAMEN",
       motif: `Nouvelle demande EEG pour patient ${data.patientId}`,
       urgence: data.urgence === "STAT" ? 3 : data.urgence === "URGENTE" ? 2 : 1,
-      sourceServiceId: "4024a951-ab12-4f08-84c9-66f5575bb737",
+      sourceServiceId: process.env.EEG_SERVICE_ID,
       sourceServiceName: "EEG",
       patientId: patient.id,
       sentAt: new Date().toISOString(),

@@ -2,6 +2,7 @@ import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { PatientLookupService } from '../patients/patient-lookup.service';
 import { ExternalEegPrescriptionDto } from '../demandes/dto/external-prescription.dto';
+import { NotificationExternalService } from './notification-external.service';
 
 @Injectable()
 export class ExternalPrescriptionService {
@@ -10,6 +11,7 @@ export class ExternalPrescriptionService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly patientLookup: PatientLookupService,
+    private readonly notificationExternal: NotificationExternalService,
   ) {}
 
   /**
@@ -71,7 +73,18 @@ export class ExternalPrescriptionService {
         `Created EEG demand: ${demande.id} for patient ${patient.externalPatientId || patient.id}`,
       );
 
-      // Step 4: Return acknowledgment
+      // Step 4: Send notification (fire-and-forget, non-blocking)
+      this.notificationExternal.sendNotification({
+        type: 'NOUVELLE_DEMANDE',
+        motif: `Nouvelle demande EEG (externe) pour patient ${dto.patientId}`,
+        urgence: dto.urgence === 'STAT' ? 3 : dto.urgence === 'URGENTE' ? 2 : 1,
+        sourceServiceId: process.env.EEG_SERVICE_ID,
+        sourceServiceName: 'EEG',
+        patientId: patient.id,
+        sentAt: new Date().toISOString(),
+      }).catch((err) => this.logger.warn(`Notification non envoyée: ${err.message}`));
+
+      // Step 5: Return acknowledgment
       return {
         success: true,
         message: 'Prescription EEG reçue et traitée',
