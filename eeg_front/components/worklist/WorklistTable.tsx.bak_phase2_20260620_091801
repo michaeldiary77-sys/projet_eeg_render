@@ -201,7 +201,7 @@ export default function WorklistTable({ demandes, onRefresh }: WorklistTableProp
                     )}
                   </td>
                   <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
-                    {demande.statut === "CREEE" && user?.role === "TECHNICIEN" && demande.urgence !== "STAT" && (
+                    {demande.statut === "CREEE" && user?.role === "MEDECIN_SERVICE" && demande.urgence !== "STAT" && (
                       <button
                         onClick={async (e) => {
                           e.stopPropagation()
@@ -218,7 +218,7 @@ export default function WorklistTable({ demandes, onRefresh }: WorklistTableProp
                         ✅ Valider
                       </button>
                     )}
-                    {demande.statut === "CREEE" && user?.role === "TECHNICIEN" && (
+                    {demande.statut === "CREEE" && user?.role === "MEDECIN_SERVICE" && (
                       <button
                         onClick={(e) => { e.stopPropagation(); setRefusId(demande.id); setMotifRefus('') }}
                         className="text-xs bg-red-500 hover:bg-red-600 text-white font-medium px-3 py-1 rounded-lg transition-colors mr-2"
@@ -226,7 +226,7 @@ export default function WorklistTable({ demandes, onRefresh }: WorklistTableProp
                         ❌ Refuser
                       </button>
                     )}
-                    {demande.statut === "VALIDEE" && user?.role === "TECHNICIEN" && (
+                    {demande.statut === "VALIDEE" && user?.role === "CHEF_SERVICE" && (
                       <button
                         onClick={(e) => { e.stopPropagation(); setSlotPickerOpen(true); setDemandeToPlan(demande); }}
                         className="text-xs bg-cyan-500 hover:bg-cyan-600 text-white font-medium px-3 py-1 rounded-lg transition-colors mr-2"
@@ -235,7 +235,7 @@ export default function WorklistTable({ demandes, onRefresh }: WorklistTableProp
 
                       </button>
                     )}
-                    {demande.statut === "EN_INTERPRETATION" && (user?.role === "TECHNICIEN" || user?.role === "CHEF_SERVICE") && (
+                    {demande.statut === "RESULTAT_DISPONIBLE" && user?.role === "MEDECIN_SERVICE" && (
                       <button
                         onClick={async (e) => {
                           e.stopPropagation()

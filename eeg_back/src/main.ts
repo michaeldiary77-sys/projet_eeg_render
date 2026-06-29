@@ -45,7 +45,7 @@ async function bootstrap() {
   });
 
   const port = process.env.PORT ?? 3001;
-  await app.listen(port);
+  await app.listen(process.env.PORT || 3001);
   console.log(`🏥 SIH CHUA — Module EEG démarré sur http://localhost:${port}`);
   console.log(`📋 Swagger disponible sur http://localhost:${port}/eeg/api/docs`);
 }

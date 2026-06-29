@@ -10,3 +10,20 @@ export interface RapportDelais {
   delaiMoyenAckMinutes: number
   nombreDemandes: number
 }
+
+export interface RapportAnomalie {
+  id: string
+  demandeId: string
+  estCritique: boolean
+  dateValidation?: string
+  demande?: {
+    numeroEEG: string
+    statut: string
+    patient?: {
+      nom: string
+      prenom: string
+      idDossier: string
+    }
+    dateAck?: string
+  }
+}

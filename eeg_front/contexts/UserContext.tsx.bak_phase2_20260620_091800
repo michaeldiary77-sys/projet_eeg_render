@@ -3,7 +3,18 @@ import { createContext, useContext, useState } from 'react'
 import type { Utilisateur, RoleUtilisateur } from '@/types/eeg/utilisateur'
 
 const UTILISATEURS_SIMULES: Record<RoleUtilisateur, Utilisateur> = {
-  MEDECIN_SERVICE: {    id: '1',    nom: 'Rakoto',    prenom: 'Jean',    email: 'medecin@chu.mg',    role: 'MEDECIN_SERVICE',    ordresProfessionnel: 'ONM',    actif: true,    createdAt: new Date().toISOString(),    updatedAt: new Date().toISOString(),  },
+  MEDECIN_SERVICE: {
+    id: 'int-00000000-0000-0000-0000-000000000004',
+    nom: 'Rasolo',
+    prenom: 'Hery',
+    email: 'hery.rasolo@chu-andrainjato.mg',
+    role: 'MEDECIN_SERVICE',
+    ordresProfessionnel: 'ONM',
+    numeroOrdre: 'ONM-2024-0456',
+    actif: true,
+    createdAt: '',
+    updatedAt: '',
+  },
   TECHNICIEN: {
     id: 'tec-00000000-0000-0000-0000-000000000002',
     nom: 'Rakotomalala',

@@ -112,21 +112,6 @@ export default function WorklistTable({ demandes, onRefresh }: WorklistTableProp
       setEnCours(false)
     }
   }, [refusId, motifRefus, onRefresh])
-  const handleConfirmSlot = async (slot: { dateRDV: string; heureDebut: string; salle: string }) => {
-    if (!demandeToPlan) return
-    try {
-      const { planifierRdv } = await import('@/services/demandes.service')
-      await planifierRdv(demandeToPlan.id, slot)
-      toast.success('RDV planifié ✅')
-      setSlotPickerOpen(false)
-      setDemandeToPlan(null)
-      onRefresh()
-      window.location.href = `/eeg/planning?date=${slot.dateRDV.split('T')[0]}&demandeId=${demandeToPlan.id}`
-    } catch (err) {
-      toast.error(handleApiError(err))
-    }
-  }
-
 
   if (demandes.length === 0) {
     return (
@@ -201,7 +186,7 @@ export default function WorklistTable({ demandes, onRefresh }: WorklistTableProp
                     )}
                   </td>
                   <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
-                    {demande.statut === "CREEE" && user?.role === "TECHNICIEN" && demande.urgence !== "STAT" && (
+                    {demande.statut === "CREEE" && user?.role === "MEDECIN_SERVICE" && demande.urgence !== "STAT" && (
                       <button
                         onClick={async (e) => {
                           e.stopPropagation()
@@ -218,24 +203,21 @@ export default function WorklistTable({ demandes, onRefresh }: WorklistTableProp
                         ✅ Valider
                       </button>
                     )}
-                    {demande.statut === "CREEE" && user?.role === "TECHNICIEN" && (
+                    {demande.statut === "CREEE" && user?.role === "MEDECIN_SERVICE" && (
                       <button
                         onClick={(e) => { e.stopPropagation(); setRefusId(demande.id); setMotifRefus('') }}
                         className="text-xs bg-red-500 hover:bg-red-600 text-white font-medium px-3 py-1 rounded-lg transition-colors mr-2"
                       >
                         ❌ Refuser
                       </button>
-                    )}
-                    {demande.statut === "VALIDEE" && user?.role === "TECHNICIEN" && (
                       <button
                         onClick={(e) => { e.stopPropagation(); setSlotPickerOpen(true); setDemandeToPlan(demande); }}
                         className="text-xs bg-cyan-500 hover:bg-cyan-600 text-white font-medium px-3 py-1 rounded-lg transition-colors mr-2"
                       >
-                        📅 Planifier
-
+                        Planifier
                       </button>
                     )}
-                    {demande.statut === "EN_INTERPRETATION" && (user?.role === "TECHNICIEN" || user?.role === "CHEF_SERVICE") && (
+                    {demande.statut === "RESULTAT_DISPONIBLE" && user?.role === "MEDECIN_SERVICE" && (
                       <button
                         onClick={async (e) => {
                           e.stopPropagation()
@@ -354,7 +336,6 @@ export default function WorklistTable({ demandes, onRefresh }: WorklistTableProp
           onConfirm={handleConfirmSlot}
         />
       )}
-
     </>
   )
 }

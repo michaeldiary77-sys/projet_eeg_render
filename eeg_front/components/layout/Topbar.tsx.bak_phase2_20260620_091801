@@ -4,7 +4,8 @@ import { useUser } from '@/contexts/UserContext'
 import { getNotificationsCount } from '@/services/notifications.service'
 import type { RoleUtilisateur } from '@/types/eeg/utilisateur'
 
-const ROLE_LABELS: Record<RoleUtilisateur, string> = {  MEDECIN_SERVICE: 'Médecin',
+const ROLE_LABELS: Record<RoleUtilisateur, string> = {
+  MEDECIN_SERVICE: 'Médecin de service',
   TECHNICIEN: 'Technicien',
   CHEF_SERVICE: 'Chef de service',
   MAJOR_SERVICE: 'Major de service',
@@ -42,6 +43,7 @@ export default function Topbar() {
   onChange={e => setRole(e.target.value as RoleUtilisateur)}
   className="text-xs border border-gray-200 rounded-lg px-2 py-1 text-gray-600 bg-gray-50"
 >
+  <option value="MEDECIN_SERVICE">Médecin de service</option>
   <option value="CHEF_SERVICE">Chef de service</option>
   <option value="TECHNICIEN">Technicien</option>
   <option value="MAJOR_SERVICE">Major de service</option>

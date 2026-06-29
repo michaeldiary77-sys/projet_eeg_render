@@ -48,7 +48,7 @@ export const realiserDemande = async (id: string): Promise<DemandeEEG> => {
   return response.data
 }
 
-export const interpreterDemande = async (id: string, brouillon: { rythmesDeFond: string; anomaliesDetectees: string; conclusionDiagnostique: string; compteRendu: string }): Promise<DemandeEEG> => {
+export const interpreterDemande = async (id: string, brouillon: any): Promise<DemandeEEG> => {
   const response = await api.patch(`/eeg/demandes/${id}/interpreter`, brouillon)
   return response.data
 }

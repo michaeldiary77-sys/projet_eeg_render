@@ -27,7 +27,7 @@ export default function WorklistPage() {
     if (!user?.role) return
     setChargement(true)
     try {
-      const data: any = await getWorklist(user.role)
+      const data = await getWorklist(user.role)
       
       // Transformer l'objet retourné en tableau selon le rôle
       let demandesArray: DemandeEEG[] = []

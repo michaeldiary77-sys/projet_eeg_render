@@ -1,0 +1,205 @@
+'use client'
+
+import { useState } from 'react'
+import { useUser } from '@/contexts/UserContext'
+import { uploadTrace } from '@/services/resultats.service'
+import { realiserRdv, marquerNonRealise } from '@/services/rdvs.service'
+import { handleApiError } from '@/lib/handleApiError'
+import { toast } from 'sonner'
+import type { DemandeEEG } from '@/types/eeg/demande'
+
+interface TabBRealisationProps {
+  demande: DemandeEEG
+  onRefresh: () => void
+}
+
+export default function TabBRealisation({ demande, onRefresh }: TabBRealisationProps) {
+  const { user } = useUser()
+  const [fichier, setFichier] = useState<File | null>(null)
+  const [duree, setDuree] = useState('')
+  const [compteRendu, setCompteRendu] = useState('')
+  const [estCritique, setEstCritique] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [progression, setProgression] = useState(0)
+
+  const lectureSeule = user.role === 'MEDECIN_SERVICE'
+  const resultat = demande.resultat
+  const rdv = demande.rdv
+
+  const handleFichier = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0]
+    if (!f) return
+    if (!f.name.toLowerCase().endsWith('.edf')) {
+      toast.error('Seuls les fichiers .edf sont acceptés')
+      return
+    }
+    setFichier(f)
+  }
+
+  const handleUpload = async () => {
+    if (!fichier) return
+    setUploading(true)
+    setProgression(0)
+    try {
+      // Simulation progression
+      const interval = setInterval(() => {
+        setProgression(p => Math.min(p + 10, 90))
+      }, 200)
+      await uploadTrace(demande.id, fichier, {
+        dureeEnregistrement: duree ? parseInt(duree) : undefined,
+        compteRendu: compteRendu || undefined,
+        estCritique,
+      })
+      clearInterval(interval)
+      setProgression(100)
+      toast.success('Fichier EDF uploadé avec succès')
+      onRefresh()
+    } catch (error) {
+      toast.error(handleApiError(error))
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const handleRealiser = async () => {
+    if (!rdv) return
+    try {
+      await realiserRdv(rdv.id, user.id)
+      toast.success('RDV marqué comme réalisé')
+      onRefresh()
+    } catch (error) {
+      toast.error(handleApiError(error))
+    }
+  }
+
+  const handleNonRealise = async () => {
+    if (!rdv) return
+    try {
+      await marquerNonRealise(rdv.id)
+      toast.success('RDV marqué comme non réalisé')
+      onRefresh()
+    } catch (error) {
+      toast.error(handleApiError(error))
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Upload fichier EDF */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <h3 className="font-semibold text-gray-800 mb-4">📁 Fichier trace EDF</h3>
+
+        {resultat?.nomFichierImage ? (
+          <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-lg border border-emerald-200">
+            <span className="text-emerald-600 text-xl">✅</span>
+            <div>
+              <p className="text-sm font-medium text-emerald-700">Fichier déjà uploadé</p>
+              <p className="text-xs text-emerald-600 font-mono">{resultat.nomFichierImage}</p>
+            </div>
+          </div>
+        ) : null}
+
+        {!lectureSeule && (
+          <div className="mt-4 space-y-4">
+            <div>
+              <label className="block text-xs text-gray-500 mb-1.5">
+                Fichier EDF <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="file"
+                accept=".edf"
+                onChange={handleFichier}
+                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[#eaddff] file:text-[#6750a4] hover:file:bg-[#d0bcff] cursor-pointer"
+              />
+              {fichier && (
+                <p className="text-xs text-gray-500 mt-1">
+                  📄 {fichier.name} ({(fichier.size / 1024 / 1024).toFixed(2)} Mo)
+                </p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1.5">Durée enregistrement (min)</label>
+                <input
+                  type="number"
+                  value={duree}
+                  onChange={e => setDuree(e.target.value)}
+                  placeholder="Ex: 30"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6750a4]"
+                />
+              </div>
+              <div className="flex items-center gap-2 mt-5">
+                <input
+                  type="checkbox"
+                  id="critique"
+                  checked={estCritique}
+                  onChange={e => setEstCritique(e.target.checked)}
+                  className="w-4 h-4 accent-[#6750a4]"
+                />
+                <label htmlFor="critique" className="text-sm text-gray-700 cursor-pointer">
+                  Résultat critique 🚨
+                </label>
+              </div>
+            </div>
+
+            {uploading && (
+              <div className="w-full bg-gray-100 rounded-full h-2">
+                <div
+                  className="bg-[#6750a4] h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${progression}%` }}
+                />
+              </div>
+            )}
+
+            <button
+              onClick={handleUpload}
+              disabled={!fichier || uploading}
+              className="px-5 py-2.5 bg-[#6750a4] text-white text-sm font-semibold rounded-xl hover:bg-[#5a4490] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {uploading ? `Upload en cours... ${progression}%` : '⬆️ Uploader le fichier EDF'}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Statut RDV */}
+      {rdv && (
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <h3 className="font-semibold text-gray-800 mb-4">📅 Statut du RDV</h3>
+          <div className="flex items-center gap-3 mb-4">
+            <span className="text-sm text-gray-600">Statut actuel :</span>
+            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+              rdv.statut === 'REALISE'
+                ? 'bg-emerald-100 text-emerald-700'
+                : rdv.statut === 'NON_REALISE'
+                ? 'bg-red-100 text-red-700'
+                : rdv.statut === 'ANNULE'
+                ? 'bg-gray-100 text-gray-400'
+                : 'bg-yellow-100 text-yellow-700'
+            }`}>
+              {rdv.statut}
+            </span>
+          </div>
+
+          {!lectureSeule && rdv.statut === 'EN_ATTENTE' && (
+            <div className="flex gap-3">
+              <button
+                onClick={handleRealiser}
+                className="px-4 py-2 bg-emerald-500 text-white text-sm font-semibold rounded-xl hover:bg-emerald-600 transition-colors"
+              >
+                ✅ Réalisé
+              </button>
+              <button
+                onClick={handleNonRealise}
+                className="px-4 py-2 bg-red-100 text-red-700 text-sm font-semibold rounded-xl hover:bg-red-200 transition-colors"
+              >
+                ❌ Pas encore
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}

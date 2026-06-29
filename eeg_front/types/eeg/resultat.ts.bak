@@ -1,10 +1,9 @@
 export interface EegResultat {
   id: string
   demandeId: string
-  fichierImagePath?: string
-  nomFichierImage?: string
-  dureeEnregistrement?: number
+  fichierTracePath?: string
   nomFichierOriginal?: string
+  dureeEnregistrement?: number
   rythmesDeFond?: string
   anomaliesDetectees?: string
   conclusionDiagnostique?: string
