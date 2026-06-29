@@ -63,12 +63,10 @@ enum ActionAudit {
 }
 
 enum RoleUtilisateur {
-  MEDECIN_SERVICE
   TECHNICIEN
   CHEF_SERVICE
   MAJOR_SERVICE
 }
-
 enum OrdreProfessionnel {
   ONM
   ONIM
@@ -78,13 +76,27 @@ enum OrdreProfessionnel {
   AUCUN
 }
 
+enum SourceSystem {
+  LOCAL
+  PRESCRIPTION
+  ACCUEIL
+  AUTRE
+}
+
 model Patient {
-  id        String @id @default(uuid())
-  nom       String 
-  prenom    String 
-  age       Int
-  sexe      String 
-  idDossier String @unique 
+  id                String  @id @default(uuid())
+  externalPatientId String? @unique // ID from external systems (e.g., CHU-2026-00001)
+  sourceSystem      SourceSystem @default(LOCAL)
+  isExternal        Boolean @default(false)
+
+  nom       String?
+  prenom    String?
+  age       Int?
+  sexe      String?
+  idDossier String? @unique 
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   demandes      EegDemande[]
   rdvs          EegRdv[]

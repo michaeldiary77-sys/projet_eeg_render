@@ -1,6 +1,9 @@
 import { Module } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
 import { NotificationExternalService } from './notification-external.service';
+import { ExternalPrescriptionService } from './external-prescription.service';
+import { ExternalPrescriptionController } from './external-prescription.controller';
+import { PatientLookupService } from '../patients/patient-lookup.service';
 
 @Module({
   imports: [
@@ -9,7 +12,8 @@ import { NotificationExternalService } from './notification-external.service';
       maxRedirects: 5,
     }),
   ],
-  providers: [NotificationExternalService],
-  exports: [NotificationExternalService],
+  providers: [NotificationExternalService, ExternalPrescriptionService, PatientLookupService],
+  controllers: [ExternalPrescriptionController],
+  exports: [NotificationExternalService, ExternalPrescriptionService, PatientLookupService],
 })
 export class ExternalModule {}

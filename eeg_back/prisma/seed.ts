@@ -33,7 +33,7 @@ async function main() {
   });
   const med = await prisma.utilisateur.upsert({
     where: { email: 'randria@chu-andrainjato.mg' }, update: {},
-    create: { id: 'int-00000000-0000-0000-0000-000000000004', nom: 'Randrianantenaina', prenom: 'Soa', email: 'randria@chu-andrainjato.mg', password: passwordHash, telephone: '+261 34 00 000 04', matricule: 'CHU-MED-001', role: RoleUtilisateur.MEDECIN_SERVICE, ordresProfessionnel: OrdreProfessionnel.ONM, numeroOrdre: '12/5678/MG', actif: true },
+    create: { id: 'int-00000000-0000-0000-0000-000000000004', nom: 'Randrianantenaina', prenom: 'Soa', email: 'randria@chu-andrainjato.mg', password: passwordHash, telephone: '+261 34 00 000 04', matricule: 'CHU-MED-001', role: RoleUtilisateur.CHEF_SERVICE, ordresProfessionnel: OrdreProfessionnel.ONM, numeroOrdre: '12/5678/MG', actif: true },
   });
   console.log('✅ Utilisateurs');
 
@@ -71,7 +71,7 @@ async function main() {
   console.log('CHEF_SERVICE | raharison@chu-andrainjato.mg | password123');
   console.log('TECHNICIEN | rakotomalala@chu-andrainjato.mg | password123');
   console.log('MAJOR_SERVICE | andrianasolo@chu-andrainjato.mg | password123');
-  console.log('MEDECIN_SERVICE | randria@chu-andrainjato.mg | password123');
+  console.log('CHEF_SERVICE (Médecin) | randria@chu-andrainjato.mg | password123');
 }
 
 main().catch((e) => { console.error('❌', e); process.exit(1); }).finally(() => prisma.$disconnect());

@@ -1,12 +1,14 @@
 import { NotificationExternalService } from "../external/notification-external.service";
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { PatientLookupService } from '../patients/patient-lookup.service';
 
 @Injectable()
 export class DemandesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationService: NotificationExternalService,
+    private readonly patientLookup: PatientLookupService,
   ) {}
 
   async getWorklist(role: string) {
@@ -251,26 +253,31 @@ export class DemandesService {
   }
 
   async creerDemande(data: any, prescripteurId: string) {
-    // Envoi de notification simplifié
-this.notificationService.sendNotification({
-  type: "DEMANDE_EXAMEN",
-  motif: `Nouvelle demande EEG pour patient ${data.patientId}`,
-  urgence: data.urgence === "STAT" ? 3 : data.urgence === "URGENTE" ? 2 : 1,
-  sourceServiceId: "4024a951-ab12-4f08-84c9-66f5575bb737",
-  sourceServiceName: "EEG",
-  patientId: data.patientId,
-  sentAt: new Date().toISOString(),
-}).catch(err => console.error("Erreur notification:", err.message));
+    // Get or create patient (supports external patients)
+    const patient = await this.patientLookup.getOrCreateExternalPatient(
+      data.patientId,
+      data.patient, // Optional patient info
+    );
 
+    // Envoi de notification simplifié
+    this.notificationService.sendNotification({
+      type: "DEMANDE_EXAMEN",
+      motif: `Nouvelle demande EEG pour patient ${data.patientId}`,
+      urgence: data.urgence === "STAT" ? 3 : data.urgence === "URGENTE" ? 2 : 1,
+      sourceServiceId: "4024a951-ab12-4f08-84c9-66f5575bb737",
+      sourceServiceName: "EEG",
+      patientId: patient.id,
+      sentAt: new Date().toISOString(),
+    }).catch(err => console.error("Erreur notification:", err.message));
 
     const demande = await this.prisma.eegDemande.create({
       data: {
-        patientId: data.patientId,
+        patientId: patient.id,
         prescripteurId: prescripteurId,
         typeEEG: data.typeEEG,
-        urgence: data.urgence,
-        motifPrescription: data.motifPrescription,
-        episodeSoinsId: data.episodeSoinsId,
+        urgence: data.urgence || 'NORMALE',
+        motifPrescription: data.motifPrescription || data.renseignements,
+        episodeSoinsId: data.episodeSoinsId || data.chuId || 'EXTERNE',
         numeroEEG: `EEG-${Date.now()}`,
       },
       include: { patient: true, prescripteur: true },

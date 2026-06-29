@@ -12,9 +12,10 @@ import { NotificationsController } from './notifications/notifications.controlle
 import { RdvsController } from './rdvs/rdvs.controller';
 import { PatientsController } from './patients/patients.controller';
 import { EegSchedulerService } from './jobs/eeg-scheduler.service';
+import { PatientLookupService } from './patients/patient-lookup.service';
 
 @Module({
-  imports: [ExternalModule,ScheduleModule.forRoot()],
+  imports: [ExternalModule, ScheduleModule.forRoot()],
   controllers: [
     DemandesController,
     ResultatsController,
@@ -29,6 +30,7 @@ import { EegSchedulerService } from './jobs/eeg-scheduler.service';
     DemandesService,
     ResultatsService,
     EegSchedulerService,
+    PatientLookupService,
   ],
 })
 export class EegModule {}
