@@ -11,9 +11,34 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { StatutRdv } from '@prisma/client';
 
+import { PatientLookupService } from '../patients/patient-lookup.service';
+
 @Controller('eeg/rdvs')
 export class RdvsController {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly patientLookup: PatientLookupService,
+  ) {}
+
+  private async enrichRdvs(rdvs: any[]) {
+    return Promise.all(
+      rdvs.map(async (r) => {
+        if (!r.patient) return r;
+        if (!r.patient.isExternal) return r;
+        const info = await this.patientLookup.getPatientInfoWithExternalLookup(r.patient);
+        return {
+          ...r,
+          patient: {
+            ...r.patient,
+            nom: info.nom,
+            prenom: info.prenom,
+            age: info.age,
+            sexe: info.sexe
+          }
+        };
+      })
+    );
+  }
 
   @Get()
   async getRdvs(
@@ -30,15 +55,16 @@ export class RdvsController {
       if (dateFin) where.dateRdv.lte = new Date(dateFin);
     }
     if (patientId) where.patientId = patientId;
-    return this.prisma.eegRdv.findMany({
+    const rdvs = await this.prisma.eegRdv.findMany({
       where,
       include: {
-        patient: { select: { nom: true, prenom: true, idDossier: true, age: true, sexe: true } },
+        patient: true,
         prescripteur: { select: { nom: true, role: true } },
         demande: { select: { numeroEEG: true, statut: true, urgence: true, typeEEG: true, motifPrescription: true } },
       },
       orderBy: { dateRdv: 'asc' },
     });
+    return this.enrichRdvs(rdvs);
   }
 
   @Get('semaine')
@@ -50,15 +76,16 @@ export class RdvsController {
     const finSemaine = new Date(debutSemaine);
     finSemaine.setDate(debutSemaine.getDate() + 6);
     finSemaine.setHours(23, 59, 59, 999);
-    return this.prisma.eegRdv.findMany({
+    const rdvs = await this.prisma.eegRdv.findMany({
       where: { dateRdv: { gte: debutSemaine, lte: finSemaine } },
       include: {
-        patient: { select: { nom: true, prenom: true, idDossier: true, age: true, sexe: true } },
+        patient: true,
         prescripteur: { select: { nom: true, role: true } },
         demande: { select: { numeroEEG: true, statut: true, urgence: true, typeEEG: true, motifPrescription: true } },
       },
       orderBy: { dateRdv: 'asc' },
     });
+    return this.enrichRdvs(rdvs);
   }
 
   @Get('today')
@@ -67,20 +94,21 @@ export class RdvsController {
     debut.setHours(0, 0, 0, 0);
     const fin = new Date();
     fin.setHours(23, 59, 59, 999);
-    return this.prisma.eegRdv.findMany({
+    const rdvs = await this.prisma.eegRdv.findMany({
       where: { dateRdv: { gte: debut, lte: fin } },
       include: {
-        patient: { select: { nom: true, prenom: true, idDossier: true } },
+        patient: true,
         prescripteur: { select: { nom: true, role: true } },
         demande: { select: { numeroEEG: true, statut: true, urgence: true, typeEEG: true } },
       },
       orderBy: { heureDebut: 'asc' },
     });
+    return this.enrichRdvs(rdvs);
   }
 
   @Get(':id')
   async getRdvById(@Param('id') id: string) {
-    return this.prisma.eegRdv.findUnique({
+    const rdv = await this.prisma.eegRdv.findUnique({
       where: { id },
       include: {
         patient: true,
@@ -89,6 +117,9 @@ export class RdvsController {
         notifications: true,
       },
     });
+    if (!rdv) return null;
+    const [enriched] = await this.enrichRdvs([rdv]);
+    return enriched;
   }
 
   @Post()

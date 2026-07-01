@@ -11,59 +11,79 @@ export class DemandesService {
     private readonly patientLookup: PatientLookupService,
   ) {}
 
+  private async enrichDemandePatient(demande: any) {
+    if (!demande || !demande.patient) return demande;
+    if (!demande.patient.isExternal) return demande;
+    const info = await this.patientLookup.getPatientInfoWithExternalLookup(demande.patient);
+    return {
+      ...demande,
+      patient: {
+        ...demande.patient,
+        nom: info.nom,
+        prenom: info.prenom,
+        age: info.age,
+        sexe: info.sexe
+      }
+    };
+  }
+
+  private async enrichDemandes(demandes: any[]) {
+    return Promise.all(demandes.map(d => this.enrichDemandePatient(d)));
+  }
+
   async getWorklist(role: string) {
     switch (role) {
       case 'MEDECIN_SERVICE':
         return {
-          aValider: await this.prisma.eegDemande.findMany({
+          aValider: await this.enrichDemandes(await this.prisma.eegDemande.findMany({
             where: { statut: 'CREEE' },
             include: { patient: true, prescripteur: true },
             orderBy: { dateCreation: 'asc' },
-          }),
-          aInterpreter: await this.prisma.eegDemande.findMany({
+          })),
+          aInterpreter: await this.enrichDemandes(await this.prisma.eegDemande.findMany({
             where: { statut: 'EN_COURS' },
             include: { patient: true, prescripteur: true, resultat: true },
             orderBy: { dateRealisation: 'asc' },
-          }),
+          })),
         };
       case 'TECHNICIEN':
         return {
-          statUrgents: await this.prisma.eegDemande.findMany({
+          statUrgents: await this.enrichDemandes(await this.prisma.eegDemande.findMany({
             where: { statut: 'CREEE', urgence: 'STAT' },
             include: { patient: true },
             orderBy: { dateCreation: 'asc' },
-          }),
-          rdvDuJour: await this.prisma.eegDemande.findMany({
+          })),
+          rdvDuJour: await this.enrichDemandes(await this.prisma.eegDemande.findMany({
             where: { statut: 'PLANIFIEE' },
             include: { patient: true, rdv: true },
             orderBy: { dateRDV: 'asc' },
-          }),
+          })),
         };
       case 'CHEF_SERVICE':
         return {
-          aValider: await this.prisma.eegDemande.findMany({
+          aValider: await this.enrichDemandes(await this.prisma.eegDemande.findMany({
             where: { statut: 'CREEE' },
             include: { patient: true, prescripteur: true },
             orderBy: [{ urgence: 'asc' }, { dateCreation: 'asc' }],
-          }),
-          aPlanifier: await this.prisma.eegDemande.findMany({
+          })),
+          aPlanifier: await this.enrichDemandes(await this.prisma.eegDemande.findMany({
             where: { statut: 'VALIDEE' },
             include: { patient: true },
             orderBy: { dateCreation: 'asc' },
-          }),
-          aValiderCR: await this.prisma.eegDemande.findMany({
+          })),
+          aValiderCR: await this.enrichDemandes(await this.prisma.eegDemande.findMany({
             where: { statut: 'EN_INTERPRETATION' },
             include: { patient: true, resultat: true },
             orderBy: { dateCreation: 'asc' },
-          }),
+          })),
         };
       case 'MAJOR_SERVICE':
         return {
-          toutes: await this.prisma.eegDemande.findMany({
+          toutes: await this.enrichDemandes(await this.prisma.eegDemande.findMany({
             include: { patient: true, prescripteur: true, resultat: true, rdv: true },
             orderBy: { dateCreation: 'desc' },
             take: 50,
-          }),
+          })),
         };
       default:
         return { message: 'Rôle non reconnu' };
@@ -76,15 +96,16 @@ export class DemandesService {
       include: { patient: true, prescripteur: true, resultat: true, rdv: true },
     });
     if (!d) throw new NotFoundException(`Demande ${id} introuvable`);
-    return d;
+    return this.enrichDemandePatient(d);
   }
 
   async getDemandesByPatient(patientId: string) {
-    return this.prisma.eegDemande.findMany({
+    const demandes = await this.prisma.eegDemande.findMany({
       where: { patientId },
-      include: { resultat: true },
+      include: { resultat: true, patient: true },
       orderBy: { dateCreation: 'desc' },
     });
+    return this.enrichDemandes(demandes);
   }
 
   async validerDemande(id: string, medecinId: string) {
