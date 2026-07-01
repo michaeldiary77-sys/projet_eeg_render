@@ -30,7 +30,7 @@ export default function PatientCard({ patient }: PatientCardProps) {
               {patient.prenom} {patient.nom}
             </p>
             <p className="text-xs text-gray-400">
-              {patient.age} ans — {patient.sexe === 'M' ? '♂ Masculin' : '♀ Féminin'}
+              {patient.age ? `${patient.age} ans` : 'Âge inconnu'} — {patient.sexe === 'M' ? '♂ Masculin' : patient.sexe === 'F' ? '♀ Féminin' : 'Sexe inconnu'}
             </p>
           </div>
         </div>

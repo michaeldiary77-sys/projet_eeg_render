@@ -92,14 +92,16 @@ export default function FicheHeader({ demande, onRefresh }: FicheHeaderProps) {
             {patient && (
               <>
                 <span className="text-sm text-gray-500">
-                  {patient.age} ans
+                  {patient.age ? `${patient.age} ans` : 'Âge inconnu'}
                 </span>
                 <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
                   patient.sexe === 'M'
                     ? 'bg-blue-100 text-blue-700'
-                    : 'bg-pink-100 text-pink-700'
+                    : patient.sexe === 'F'
+                    ? 'bg-pink-100 text-pink-700'
+                    : 'bg-gray-100 text-gray-700'
                 }`}>
-                  {patient.sexe === 'M' ? '♂ Masculin' : '♀ Féminin'}
+                  {patient.sexe === 'M' ? '♂ Masculin' : patient.sexe === 'F' ? '♀ Féminin' : 'Sexe inconnu'}
                 </span>
               </>
             )}
